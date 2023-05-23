@@ -456,9 +456,9 @@ VectorXd negative_eigvls(MatrixXd M,double epsi){
 the occupations and NOs are optimised in-place
 */
 void RDM1::opti(Functional* func, int disp, double epsi, int maxiter, string hess_approx, string file, string cond){
-    ofstream ofile; ofile.open("/Users/nicolascartier/Documents/Programmes/Tests/Conv data/"+file+".txt");
+    ofstream ofile; ofile.open(file+".txt");
     ofile<<setprecision(8); cout<<setprecision(8);
-    ofstream ofile_behav; ofile_behav.open("/Users/nicolascartier/Documents/Programmes/Tests/Conv data/"+file+"_behaviour.txt");
+    ofstream ofile_behav; ofile_behav.open(file+"_behaviour.txt");
     ofile_behav<<setprecision(8); 
     
     int kmax = max(100,maxiter);
