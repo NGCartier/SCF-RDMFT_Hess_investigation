@@ -27,3 +27,8 @@ string cond, the termination condition of a macro-iteration, 'xtol' for comverge
 
 Return:
 a vector of the natural occupations and matrix of the natural orbitals. 
+
+----------------------------------------------------------------------------
+
+To plot the results you can use functions avalable in plot_fig_closfull_hess.py.
+The path and name of the files will need to be addapted to your calls to compute_1RDM
