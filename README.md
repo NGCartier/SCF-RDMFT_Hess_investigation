@@ -1,9 +1,9 @@
 # SCF-RDMFT_Hess_investigation
 Modification of the SCF-RDMFT repository with exact derivative and different approximations of the Hessian. Used to test impact of the different Hessians.
 
-After having compilde the Test.py file, to call a 1RDM optimisation I use the function
-compute_1RDM(mol, guess="CISD", func="Muller", disp=0, epsi = 1e-6, Maxiter=10000, 
-                 hess_approx, file, cond='xtol' )
+After having compilde the Test.py file, to call a 1RDM optimisation I use the function\
+compute_1RDM(mol, guess="CISD", func="Muller", disp=0, epsi = 1e-6, Maxiter=10000, \
+                 hess_approx, file, cond='xtol' )\
 Arguments:
 gto from PySCF mol, the molecule onwhich the energy is computed (H2O or H2O_pvdz usually), a list of molecules is defined in Test.py,
 string guess, the initial guess of the 1RDM, can be "CISD", "CCSD" or Hartree-Fock with Fermi-Dirac for the occupations (use "HF"),
