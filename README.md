@@ -1,5 +1,5 @@
 # SCF-RDMFT_Hess_investigation
-Modification of the SCF-RDMFT repository with exact derivative and different approximations of the Hessian. Used to test impact of the different Hessians.\
+Modification of the SCF-RDMFT repository with exact derivative and different approximations of the Hessian. Used to test impact of the different Hessians.
 
 After having compilde the Test.py file, to call a 1RDM optimisation I use the function\
 compute_1RDM(mol, guess="CISD", func="Muller", disp=0, epsi = 1e-6, Maxiter=10000, 
@@ -22,7 +22,7 @@ string file, path and name of the file where the output data will be writen :\
   this will creat 2 files, a file with the name provided and a file with an extra "_behaviour",\
   in the 1st file will be writen the energy and Hessian difference (with the exact one, total and per block) at each step,
   in the 2nd file the energy number of negative eigenvalues of the Hessian, difference of the exact Hessian between two steps, the step and gradient norms at each iteration.\
-string cond, the termination condition of a macro-iteration, 'xtol' for comvergence in the parameters 'gtol' for convergence in the gradient.\
+string cond, the termination condition of a macro-iteration, 'xtol' for comvergence in the parameters 'gtol' for convergence in the gradient.
 
 Return:\
 a vector of the natural occupations and matrix of the natural orbitals. 
