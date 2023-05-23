@@ -1,6 +1,17 @@
 # SCF-RDMFT_Hess_investigation
 Modification of the SCF-RDMFT repository with exact derivative and different approximations of the Hessian. Used to test impact of the different Hessians.
 
+To build the library after a change of the C++ files use makefile,
+Requires: 
+  - C++ 17,
+  - Python 3.8 and pybind11, for interface with Python,
+  - fmt libaray for formatting, 
+  - GSL libaray for math functions,
+  - Eigen 3, for matrix library,
+  - LAPACK and BLAS, to speed up Eigen.
+
+----
+
 After having compilde the Test.py file, to call a 1RDM optimisation I use the function\
 compute_1RDM(mol, guess="CISD", func="Muller", disp=0, epsi = 1e-6, Maxiter=10000, 
                  hess_approx, file, cond='xtol' )\
@@ -28,7 +39,7 @@ Arguments:\
 Return:\
 a vector of the natural occupations and matrix of the natural orbitals. 
 
-----------------------------------------------------------------------------
+----
 
 To plot the results you can use functions avalable in plot_fig_closfull_hess.py.
 The path and name of the files will need to be addapted to your calls to compute_1RDM
