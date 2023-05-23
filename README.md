@@ -17,7 +17,7 @@ Arguments:\
   - add _exastart to start with the exact Hessian,
   - add _nn, _NONO, _nNO to use the occ-occ, NO-NO, occ-NO block of the exact hessian (repsectively),
   - add hybrid_m, to use the exact Hessian every m iterations.
-  ex : "BFGS_aux_nn_NONO" will use the exact Hessian at the for the occ-occ and NO-NO blocks and the BFGS Hessian for the occ-NO block in gamma space.\
+  ex : "BFGS_aux_nn_NONO" will use the exact Hessian at the for the occ-occ and NO-NO blocks and the BFGS Hessian for the occ-NO block in gamma space.\\
 -string file, path and name of the file where the output data will be writen :\
   this will creat 2 files, a file with the name provided and a file with an extra "_behaviour",\
   in the 1st file will be writen the energy and Hessian difference (with the exact one, total and per block) at each step,
