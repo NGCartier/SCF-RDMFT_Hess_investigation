@@ -656,13 +656,13 @@ tuple<double,int> opti_aux(RDM1* gamma, Functional* func, string hess_approx, of
      
     options.fatol = 1e-17; options.frtol = 1e-17; //convergence in f usually not sufficiant to ensure convergence
     if(cond=="xtol" || cond=="stol" || cond=="x" || cond=="s"){
-        options.xtol = epsilon; 
+        options.xtol = epsilon; options.gatol = 1e-17; options.grtol = 1e-17;
     }
     else if (cond=="gtol" || cond=="gatol" || cond=="g"){
-        options.gatol = epsilon; 
+        options.gatol = epsilon; options.xtol = 1e-17; options.grtol = 1e-17;
     }
     else if (cond=="grtol"){
-        options.grtol = epsilon;
+        options.grtol = epsilon; options.gatol = 1e-17; options.xtol = 1e-17;
     }
 
     //Determines the Hessian to use depending on hess_apporox
