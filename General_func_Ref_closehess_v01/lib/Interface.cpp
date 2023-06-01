@@ -6,7 +6,6 @@
 #include <eigen3/Eigen/Core>
 #include <eigen3/unsupported/Eigen/CXX11/Tensor>
 #include <eigen3/unsupported/Eigen/MatrixFunctions>
-#include <nlopt.hpp>
 //Types
 #include <float.h>
 #include <vector>
