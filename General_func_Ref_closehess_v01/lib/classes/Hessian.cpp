@@ -16,6 +16,7 @@ const double precision = 0.1*sqrt(DBL_EPSILON);
 
 void H_init(MatrixXd* hess_, VectorXd s, VectorXd y){
     double sigma = y.dot(s)/s.squaredNorm();
+    (*hess_) = 0.0;
     for (int i=0;i<s.size();i++){
         (*hess_)(i,i) = sigma;
     }
