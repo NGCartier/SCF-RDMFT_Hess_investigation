@@ -9,7 +9,6 @@
 #include <iomanip>      
 #include <chrono>
 #include <tuple>
-#include <nlopt.hpp> 
 #include <vector>
 
 #include "1RDM_class.hpp"
