@@ -54,11 +54,11 @@ void SR1_aux(void* f_data){
     if(data->niter==0){ return ;}
     VectorXd step = data->x2 - data->x1; VectorXd y = data->grad2 - data->grad1;
     MatrixXd J = data->func->Jac(data->gamma); MatrixXd Jt = J.transpose();
-    if(data->niter==1 && data->do_1st_iter){H_init(&data->hess_,J*step,J*y);}
+    MatrixXd Jinv = Jt.completeOrthogonalDecomposition().pseudoInverse(); // /!\ inefficiant methode 
+    if(data->niter==1 && data->do_1st_iter){H_init(&data->hess_,Jinv*step,Jinv*y);}
     double sNorm = step.norm(); 
     MatrixXd Htilde = Jt*data->hess_*J+data->func->ddE_known(data->gamma);
     VectorXd u = y -Htilde*step; double uNorm = u.norm();
-    MatrixXd Jinv = Jt.completeOrthogonalDecomposition().pseudoInverse(); // /!\ inefficiant methode 
     VectorXd v = Jinv*u; 
     double sigma = u.dot(step); 
     if(abs(sigma) >precision*sNorm*uNorm){
@@ -75,10 +75,10 @@ void BFGS_aux(void* f_data){
     if(data->niter==0){ return ;}
     VectorXd step = data->x2 - data->x1; VectorXd y = data->grad2 - data->grad1;
     MatrixXd J = data->func->Jac(data->gamma); MatrixXd Jt = J.transpose();
-    if(data->niter==1 && data->do_1st_iter){H_init(&data->hess_,J*step,J*y);}
+    MatrixXd Jinv = Jt.completeOrthogonalDecomposition().pseudoInverse(); // /!\ inefficiant methode
+    if(data->niter==1 && data->do_1st_iter){H_init(&data->hess_,Jinv*step,Jinv*y);}
     double sNorm = step.norm(); double sTy = step.dot(y);
-    MatrixXd Htilde = Jt*data->hess_*J+data->func->ddE_known(data->gamma);
-    MatrixXd Jinv = Jt.completeOrthogonalDecomposition().pseudoInverse(); // /!\ inefficiant methode   
+    MatrixXd Htilde = Jt*data->hess_*J+data->func->ddE_known(data->gamma);   
     VectorXd Hs = Htilde*step;
     VectorXd u = Jinv*y ; double uNorm = u.norm();
     VectorXd v = Jinv*Hs; double sHs = step.dot(Hs);
