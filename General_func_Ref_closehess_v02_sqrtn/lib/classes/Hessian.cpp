@@ -79,7 +79,7 @@ void SR1_aux(void* f_data){
     VectorXd step = data->x2 - data->x1; VectorXd y = data->grad2 - data->grad1;
     MatrixXd J = data->func->Jac(data->gamma); MatrixXd Jt = J.transpose();
      MatrixXd Jinv = Jt.completeOrthogonalDecomposition().pseudoInverse(); // /!\ inefficiant methode 
-    if(data->niter==1 && data->do_1st_iter){H_init(&data->hess_,Jinv*step,Jinv*y,data->gamma->size());}
+    if(data->niter==1 && data->do_1st_iter){H_init(&data->hess_,J*step,Jinv*y,data->gamma->size());}
     double sNorm = step.norm(); 
     MatrixXd Htilde = Jt*data->hess_*J+data->func->ddE_known(data->gamma);
     VectorXd u = y -Htilde*step; double uNorm = u.norm();
@@ -100,7 +100,7 @@ void BFGS_aux(void* f_data){
     VectorXd step = data->x2 - data->x1; VectorXd y = data->grad2 - data->grad1;
     MatrixXd J = data->func->Jac(data->gamma); MatrixXd Jt = J.transpose();
     MatrixXd Jinv = Jt.completeOrthogonalDecomposition().pseudoInverse(); // /!\ inefficiant methode   
-    if(data->niter==1 && data->do_1st_iter){H_init(&data->hess_,Jinv*step,Jinv*y,data->gamma->size());}
+    if(data->niter==1 && data->do_1st_iter){H_init(&data->hess_,J*step,Jinv*y,data->gamma->size());}
     double sNorm = step.norm(); double sTy = step.dot(y);
     MatrixXd Htilde = Jt*data->hess_*J+data->func->ddE_known(data->gamma);
     VectorXd Hs = Htilde*step;
@@ -115,7 +115,7 @@ void DFP_aux(void* f_data){
     VectorXd step = data->x2 - data->x1; VectorXd y = data->grad2 - data->grad1;
     MatrixXd J = data->func->Jac(data->gamma); MatrixXd Jt = J.transpose();
     MatrixXd Jinv = Jt.completeOrthogonalDecomposition().pseudoInverse(); // /!\ inefficiant methode  
-    if(data->niter==1 && data->do_1st_iter){H_init(&data->hess_,Jinv*step,Jinv*y,data->gamma->size());}
+    if(data->niter==1 && data->do_1st_iter){H_init(&data->hess_,J*step,Jinv*y,data->gamma->size());}
     double sNorm = step.norm(); double sTy = step.dot(y);
     MatrixXd B = Jt*data->hess_*J;
     MatrixXd u = Jinv*(MatrixXd::Identity(step.size(),step.size())-y*step.transpose()/sTy);
