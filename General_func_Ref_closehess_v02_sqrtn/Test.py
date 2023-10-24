@@ -134,34 +134,3 @@ C4H10O_pvdz = gto.M(atom= [['C',(1.3594	,-0.3333,0.0000)],['C',(0.0000,0.3432,0.
                           ,['H',(-3.3316,-0.6951,0.0000)],['H',(-2.6493,0.6625,0.8769)]
                           ,['H',(2.6493,0.6625,-0.8769)],['H',(3.2042,0.2648,0.0000)]
                           ,['O',(2.3466	,0.6654,0.0000)]], basis = 'cc-pvdz')
-
-mol_list = [('Be',Be_pvdz), ('H2O',H2O_pvdz), ('CH4',CH4_pvdz)
-           ,('CH3OH',CH3OH_pvdz), ('C2H6',C2H6_pvdz) 
-           ,('C2H6O',C2H6O_pvdz), ('C3H8',C3H8_pvdz)]
-
-mol_large_list = [('Be',Be_pvdz), ('H2O',H2O_pvdz), ('CH4',CH4_pvdz),('CH3OH',CH3OH_pvdz)
-           , ('C2H6',C2H6_pvdz) ,('C2H6O',C2H6O_pvdz), ('C3H8',C3H8_pvdz)
-           ,('C3H6O',C3H8O_pvdz), ('C4H10',C4H10_pvdz), ('C4H10O',C4H10O_pvdz)]
-
-#to run to evaluate the energy for all the molecules of mol_list
-def auto_test(mol_list):
-    for mol in mol_list:
-        print('----------------------------------------------')
-        print('Computation of '+mol[0])
-        mol[1].verbose = 0
-        n, no = compute_1RDM(mol[1], epsi=1e-6, Maxiter=100000, disp =1)
-        
-    print('Computation terminated')
-
-
-
-#test for N2, HF, 
-def conv_test(mol,disp=0):
-    for i in range(9):
-        epsi= 10**(-i)
-        print('Convergence for epsi='+str(epsi))
-        n,no = compute_1RDM(mol,epsi=epsi, Maxiter=10000000,disp=disp)
-        print('-------------------------------------------')
-    
-
-
