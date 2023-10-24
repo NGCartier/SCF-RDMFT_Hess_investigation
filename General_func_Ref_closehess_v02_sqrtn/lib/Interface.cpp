@@ -54,7 +54,7 @@ PYBIND11_MODULE(Compute_1RDM, m){
 void test(VectorXd occ, MatrixXd orbital_mat, int ne, double Enuc,
                                     MatrixXd overlap,MatrixXd elec1int, MatrixXd elec2int,string func){
                                 
-    int l = overlap.rows(); int l2 = pow(l,2); double epsi =1e-5;
+    int l = overlap.rows(); int l2 = pow(l,2); 
     // (10)(32) permutation already presente, due to type conversion
     Tensor<double,4> T(l,l,l,l); T = TensorCast(elec2int,l,l,l,l);  Eigen::array<int,4> index({ 1,3,0,2 });
     Tensor<double,4> T2 = T.shuffle(index);
