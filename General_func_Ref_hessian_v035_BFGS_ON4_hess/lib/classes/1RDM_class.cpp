@@ -509,7 +509,7 @@ tuple<VectorXd,MatrixXd,VectorXd,MatrixXd> negative_eigvects(MatrixXd M,double e
 the occupations and NOs are optimised in-place
 */
 void RDM1::opti(Functional* func, string hess_approx, string file, int disp, double epsi, double epsi_nno, int maxiter){
-    ofstream ofile; string path ("/Users/nicolascartier/Documents/Programmes/Tests/Conv data/"); path.append(file); path.append(".txt");
+    ofstream ofile; string path (file); 
     if(file!=""){ ofile.open(path);}
     else{ofile.setstate(ios_base::badbit);}
     cout<<setprecision(-log(epsi)+1); ofile<<setprecision(-log(epsi)+1);
