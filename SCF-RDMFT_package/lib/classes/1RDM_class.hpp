@@ -84,6 +84,6 @@ const double  SQRT_TWO = 1.4142135623730950;
 const double RSQRT_TWO = 0.7071067811865475;
 const double   OCC_ONE = 0.3853393505171266; // s.t. x_p = OCC_ONE - mu for n_p = 1
     //to parametrise the activation function
-const double BETA  = 1.; const double EPSILON = 1e-9; const double ZETA = 0.1;
+const double BETA  = 1.; const double EPSILON = 1e-3; const double ZETA = 0.1;
 
 #endif
