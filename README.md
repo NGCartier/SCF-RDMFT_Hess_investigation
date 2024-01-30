@@ -10,7 +10,9 @@ Requires:
   - GSL libaray for math functions,
   - Eigen 3, for matrix library,
   - LAPACK and BLAS, to speed up Eigen.\
+    
 Uses fides-cpp (https://github.com/dweindl/fides-cpp).
+
 ----
 
 The function of interest is defined in Interface.py:
