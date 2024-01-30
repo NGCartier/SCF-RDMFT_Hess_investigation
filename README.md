@@ -31,9 +31,10 @@ Arguments:\
   
 -string file, path and name of the file where the output data will be writen :\
   the energy, iteration, norm of the gradient and step will be reported in the file (other outputs are commented, see classes/1RDM.cpp) 
-
+  
 Return:\
 a vector of the natural occupations and matrix of the natural orbitals. \
 Print:\
 Ground state energy obtained.
+
 ----
