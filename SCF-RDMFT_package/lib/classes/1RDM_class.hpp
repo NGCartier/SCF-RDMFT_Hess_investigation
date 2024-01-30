@@ -75,7 +75,7 @@ tuple<VectorXd,MatrixXd,VectorXd,MatrixXd> negative_eigvects(MatrixXd M,double e
 
 //Hessian updates
 void SR1 (void*); void BFGS (void*); void DFP (void*); void Broyden (void*); void LBFGS (void*); void ZERO (void*); 
-void SR1_aux (void*); void BFGS_aux(void*); void tBFGS_aux(void*); void sBFGS_aux(void*); void LBFGS_aux(void*); void LbBFGS_aux(void*);
+void SR1_aux (void*); void BFGS_aux(void*); void tBFGS_aux(void*); void sBFGS_aux(void*); void LBFGS_aux(void*); void LsBFGS_aux(void*);
 void H_init (MatrixXd*,VectorXd,VectorXd,int len=0); 
 
 
