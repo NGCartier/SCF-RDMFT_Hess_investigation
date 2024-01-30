@@ -12,7 +12,7 @@ import scipy as sc
 from scipy import optimize as opt 
 import Compute_1RDM
 
-def compute_1RDM(mol, guess="CISD", func="Muller", disp=0, epsi = 1e-6, Maxiter=100, hess='SR1', file='' ):
+def compute_1RDM(mol, guess="HF", func="Muller", disp=0, epsi = 1e-8, Maxiter=1000, hess='BFGS', file='' ):
     """
     Parameters
     ----------
