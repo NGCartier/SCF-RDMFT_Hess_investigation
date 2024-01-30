@@ -1,3 +1,6 @@
+Code taken from https://stackoverflow.com/questions/48795789/eigen-unsupported-tensor-to-eigen-matrix
+Acknowledgments to DavidAce
+
 #include <eigen3/Eigen/Core>
 #include <eigen3/unsupported/Eigen/CXX11/Tensor>
 #include <iostream>
