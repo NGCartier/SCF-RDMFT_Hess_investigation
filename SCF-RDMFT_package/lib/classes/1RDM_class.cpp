@@ -404,6 +404,75 @@ Vector<bool,Eigen::Dynamic> init_V(int l){
     return v;
 }
 
+
+/*Build the ensenble of subspaces used to compute the energy by seniority 0 based functionals (like PNOF5) :
+Works such that a subspace is composed of 1 occupied and any number of unoccupied natural orbitals of 
+expoentioanlly decreasing occupation.
+Remark: not called by the functionals available in htis code. */
+void RDM1::subspace() {
+    // Requires 2*Nocc = N_elec (usually the cas but not for [0.66, 0.66, 0.66] for ex.)
+    omega.clear();
+    int l = size(); int Nocc = 0;
+    for (int i = 0; i < l; i++) {
+        if (x(i) > -mu_(0)) { Nocc++; } 
+    }
+    int N_omega = l/Nocc; int N_res = l%Nocc; 
+    mu_ = VectorXd::Constant(Nocc,0.); 
+    V_ = VectorXd::Constant(Nocc,0); computed_V_ = VectorXi::Constant(Nocc,false);
+    W_ = VectorXd::Constant(Nocc,0); computed_W_ = VectorXi::Constant(Nocc,false);
+    if(l >= n_elec){
+        for (int i = 0; i < N_res; i++) {
+            vector<int> v; int p0 = i+l-Nocc;
+            v.push_back(p0); double Z = 0;
+            for (int j = 1; j < N_omega+1; j++) {
+                Z += exp(-j);
+            }
+            for (int j = 1; j < N_omega; j++) {
+                int p = l-j*Nocc -i-1;
+                v.push_back(p);
+            }
+            int p = N_res-i-1;
+            v.push_back(p);
+            omega.push_back(v); //omega has to be set before the occupations
+            set_n(p, (2 - n(p0)) * exp(-N_omega)/Z );
+            for (int j = 1; j < N_omega; j++) {
+                int p = l-j*Nocc -i-1;
+                set_n(p,(2. - n(p0)) * exp(-j)/Z)   ;
+            }
+        }
+        
+        for (int i= N_res; i < Nocc;i++){
+            vector<int> v; int p0 = i+l-Nocc;
+            v.push_back(p0); double Z = 0;
+            for (int j = 1; j < N_omega; j++) {
+                Z += exp(-j);
+            }
+            for (int j = 1; j < N_omega; j++) {
+                int p = l-j*Nocc -i-1;
+                v.push_back(p);
+            }
+            omega.push_back(v);
+            for (int j = 1; j < N_omega; j++) {
+                int p = l-j*Nocc -i-1;
+                set_n(p, (2. - n(p0)) * exp(-j)/Z );
+            }
+        }
+    }
+    else{
+        for (int i=0; i<N_res; i++){
+            vector<int> v; int p0 = N_res+i; int p = N_res-i-1;
+            v.push_back(p0); v.push_back(p); omega.push_back(v);
+            set_n(p, 2. - n(p0) );
+        }
+        for (int i= N_res; i < Nocc; i++){
+            vector<int> v; int p0 = i+N_res;
+            v.push_back(p0); omega.push_back(v);
+            set_n(p0,2.);
+        }
+        
+    }
+}
+
 /* Return the negative (<epsi) eigenvalues of the matrix M */
 VectorXd negative_eigvls(MatrixXd M,double epsi){
     VectorXd eigs  = M.selfadjointView<Upper>().eigenvalues();
