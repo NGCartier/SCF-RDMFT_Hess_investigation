@@ -14,6 +14,7 @@ using namespace Eigen;
 
 const double precision = 0.1*sqrt(DBL_EPSILON);
 
+/* Initialise the scaled Hessian */
 void H_init(MatrixXd* hess_, VectorXd s, VectorXd y, int l){ 
     int ls = s.size();
     (*hess_) = MatrixXd::Zero(ls,ls);
@@ -37,6 +38,7 @@ void H_init(MatrixXd* hess_, VectorXd s, VectorXd y, int l){
     }*/
 }
 
+/* Update using the SR1 approximation (called in x-space)*/
 void SR1(void* f_data){ 
     data_struct *data = (data_struct*) f_data; 
     if(data->niter==0){ return ;}
@@ -49,7 +51,7 @@ void SR1(void* f_data){
         data->hess_exp_ += u*u.transpose()/sigma; 
     }
 }
-
+/* Update using the BFGS approximation (called in x-space)*/
 void BFGS(void* f_data){
     data_struct *data = (data_struct*) f_data; 
     if(data->niter==0){ return ;}
@@ -60,7 +62,7 @@ void BFGS(void* f_data){
     double sHs = step.dot(Hs);
     data->hess_exp_ += psi*psi.transpose()/sTpsi - Hs*Hs.transpose()/sHs;
 }
-
+/* Update using the DFP approximation (called in x-space)*/
 void DFP(void* f_data){
     data_struct *data = (data_struct*) f_data; 
     if(data->niter==0){ return ;}
@@ -70,7 +72,7 @@ void DFP(void* f_data){
     MatrixXd u = MatrixXd::Identity(step.size(),step.size()) - psi*step.transpose()/sTpsi;
     data->hess_exp_ = u*data->hess_*u.transpose() + psi*psi.transpose()/sTpsi;
 }
-
+/* Update using a Broyden approximation (called in x-space)*/
 void Broyden(void* f_data){
     data_struct *data = (data_struct*) f_data; 
     if(data->niter==0){ return ;}
@@ -96,7 +98,7 @@ void Broyden(void* f_data){
     data->hess_exp_ = (1.-phi)*H_BFGS + phi*H_DFP;
 
 }
-
+/* Update using the SR1 approximation (called in nu-space) */
 void SR1_aux(void* f_data){
     data_struct *data = (data_struct*) f_data; 
     if(data->niter==0){ return ;}
@@ -117,7 +119,7 @@ void SR1_aux(void* f_data){
         data->update_hess = false;
     }
 }
-
+/* Update using the BFGS approximation (called in nu-space)*/
 void BFGS_aux(void* f_data){
     data_struct *data = (data_struct*) f_data; 
     if(data->niter==0){ return ;}
@@ -132,7 +134,7 @@ void BFGS_aux(void* f_data){
     double sTy = s.dot(y); double sHs = s.dot(Hs);
     data->hess_exp_ += y*y.transpose()/sTy - Hs*Hs.transpose()/sHs;    
 }
-
+/* Update using the tBFGS approximation (called in nu-space)*/
 void tBFGS_aux(void* f_data){
     data_struct *data = (data_struct*) f_data; 
     if(data->niter==0){ return ;}
@@ -148,7 +150,7 @@ void tBFGS_aux(void* f_data){
     double sHs = step.dot(Hs); double sTy = step.dot(y);
     data->hess_exp_ += u*u.transpose()/sTy - v*v.transpose()/sHs;
 }
-
+/* Update using the sBFGS approximation (called in nu-space)*/
 void sBFGS_aux(void* f_data){  
     /* Inefficient version */
     data_struct *data = (data_struct*) f_data; 
@@ -166,10 +168,8 @@ void sBFGS_aux(void* f_data){
     data->hess_exp_ += u*u.transpose()/sTy - v*v.transpose()/sHs;
 }
 
-
-
+/*Converts a deque<VectorXd> to MatrixXd*/
 MatrixXd vMap(deque<VectorXd> v){
-    //Converts a deque<VectorXd> to MatrixXd
     //Rmk: deque<VectorXd> has non contiguous memory storage so cannot avoid the loop
     int cols = v.size(); int rows = v[0].size(); MatrixXd res (rows,cols);
     for (int i=0;i<cols;i++){
@@ -178,6 +178,7 @@ MatrixXd vMap(deque<VectorXd> v){
     return res;
 }
 
+/* Update using the LBFGS approximation (called in x-space)*/
 void LBFGS(void* f_data){
     // https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.139.9400&rep=rep1&type=pdf Equation (2.3)
    
@@ -212,7 +213,7 @@ void LBFGS(void* f_data){
     }
 }
 
-
+/* Update using the LBFGS approximation (called in nu-space)*/
 void LBFGS_aux(void* f_data){
     data_struct *data = (data_struct*) f_data; 
     if(data->niter==0){ return ;}
@@ -244,8 +245,8 @@ void LBFGS_aux(void* f_data){
         cout<<"Hessian not updated : too small denominator."<<endl;
     }
 }
-
-void LbBFGS_aux(void* f_data){
+/* Update using the limited version of sBFGS approximation (called in nu-space)*/
+void LsBFGS_aux(void* f_data){
     data_struct *data = (data_struct*) f_data; 
     if(data->niter==0){ return ;}
     VectorXd step = data->x2 - data->x1; VectorXd psi = data->grad2 - data->grad1 - data->hess_cheap_*step;
@@ -278,7 +279,7 @@ void LbBFGS_aux(void* f_data){
     }
 }
 
-
+/* Set the expensive part of the Hessian to 0 */
 void ZERO (void* f_data){
     data_struct *data = (data_struct*) f_data; 
     int l = data->gamma->size(); int ll = l*(l+1)/2; int l2 = l*l;    
