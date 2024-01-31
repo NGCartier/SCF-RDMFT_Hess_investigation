@@ -54,7 +54,7 @@ CH4_pvdz = gto.M(atom  = [['H', (1,0,-1/np.sqrt(2))],['H',(-1,0,-1/np.sqrt(2))],
 O2 = gto.M(atom = [['O', (-1,0,0)], ['O', (1,0,0)]], basis = 'sto3g')
 
 N2 = gto.M(atom = [['N', (-0.55,0,0)], ['N',(0.54,0,0)]], spin = 0)
-HF = gto.M(atom = [['H', (-0.46,0,0)], ['N',(0.45,0,0)]], spin = 0)
+HF = gto.M(atom = [['H', (-0.46,0,0)], ['F',(0.45,0,0)]], spin = 0)
 
 HF_pvdz = gto.M(atom = [['H',(0,0,1.73)],['F',(0,0,0)]],basis = 'cc-pvtz',
                      unit='Bohr')
