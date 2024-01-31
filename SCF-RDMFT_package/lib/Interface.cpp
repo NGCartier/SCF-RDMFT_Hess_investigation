@@ -70,7 +70,7 @@ void test(string func, VectorXd occ, MatrixXd orbital_mat, int ne, double Enuc,
     auto functional = Funcs.find(func); 
     
     //code to test expression of the gradient and Hessian
-    VectorXd grad_num = grad_func(&functional->second,&gamma);
+    /*VectorXd grad_num = grad_func(&functional->second,&gamma);
     VectorXd grad_test= functional->second.grad_E(&gamma);
 
     //MatrixXd hess_ref = functional->second.hess_E_exa(&gamma);
@@ -96,7 +96,9 @@ void test(string func, VectorXd occ, MatrixXd orbital_mat, int ne, double Enuc,
         cout<<hess_test.block(0,l,l,ll)<<endl;
         cout<<endl<<endl;
 
-    }
+    }*/
+
+    //code to test compuation scaling of the Hessian
     /*
     auto t0 = chrono::high_resolution_clock::now(); int nrec = 5;
     
@@ -120,13 +122,15 @@ void test(string func, VectorXd occ, MatrixXd orbital_mat, int ne, double Enuc,
 }
 
 /* 
-\param arg    func: functional to use (modify this function to add new functinals)
+Optimise the 1RDM defined by results from Interface.py to obtain the ground state energy
+\param arg    func: functional to use (a new instance of the class can be defined to obtain a new functional)
               disp: if <1 prints details of the computation 
               epsi: relative error required 
               Maxiter: maximum number of iteration for one optimisation of the occupations/NOs
-              other arguments are provided by the Python part of Interface and used to build the 1RDM
+              other arguments are provided by the Interface.py and used to build the 1RDM
               hess : the Hessian approximation to use: analitycal, BFGS or SR1.
-\param result the vector of the sqrt of the occupations (n) and matrix of the NOs (no) 
+              file : file in which the outputs per iteration will be saved
+\param result the vector of the of the occupations (n) and matrix of the NOs (no) 
               (the 1RDM = no * Diagonal(n) no.T)
               also prints the corresponding ground state energy.
 */
@@ -142,6 +146,8 @@ tuple<VectorXd, MatrixXd> Optimize_1RDM(string func, VectorXd occ, MatrixXd orbi
         E = HF_func.E(&gamma);  
     }
     else{
+        //Remark: this part is aimed for seniority 0 based functionals and will not be called by functionals 
+        //        present in this implementation
         if(functional->second.needs_subspace()){
             gamma.subspace();
             gamma.solve_mu();
@@ -151,13 +157,12 @@ tuple<VectorXd, MatrixXd> Optimize_1RDM(string func, VectorXd occ, MatrixXd orbi
     }
     cout<<"E="<<E<<endl;
     return make_tuple(gamma.n(), gamma.no); 
-     
 }
 
 /*
-\param arg    func: functional to use (modify this function to add new functinals)
+\param arg    func: functional to use (a new instance of the class can be defined to obtain a new functional)
               other arguments are provided by the Python part of Interface and used to build the 1RDM
-\param result the energy of the corresponding 1RDm for the funtionla func.
+\param result the energy of the corresponding 1RDM for the funtionla func.
 */
 double E (string func, VectorXd occ, MatrixXd orbital_mat, int ne, double Enuc,
                                     MatrixXd overlap,MatrixXd elec1int, MatrixXd elec2int){
@@ -180,32 +185,3 @@ double E (string func, VectorXd occ, MatrixXd orbital_mat, int ne, double Enuc,
     }
     return E; 
 }
-
-/* //        USED TO TEST C++ PART 
-int main(){
-    int l =2; int ll = pow(l,2);
-    VectorXd n (l); MatrixXd no (l,l); MatrixXd ovlp (l,l); MatrixXd I1 (l,l); MatrixXd I2 (ll,ll); double E_nuc; E_nuc = 0.17639240364;
-    // H2 in STO-3G basis, CISD guess
-    n << 0.92511177, 1.07488823;
-    no<<  0.71365341, -0.70073708,-0.71365341, -0.70073708;
-    ovlp<<1., 0.01826264, 0.01826264, 1. ;
-    I1<<-0.64297414, -0.02083273,-0.02083273, -0.64297414;
-    I2 << 7.74605944e-01, 6.54393797e-03,
-        6.54393797e-03, 1.76382446e-01,
-        6.54393797e-03, 1.53991591e-04,
-        1.53991591e-04, 6.54393797e-03,
-        6.54393797e-03, 1.53991591e-04,
-        1.53991591e-04, 6.54393797e-03,
-        1.76382446e-01, 6.54393797e-03,
-        6.54393797e-03, 7.74605944e-01;
-    Tensor<double, 4> T(l, l, l, l); T = TensorCast(I2,l,l,l,l);  Eigen::array<int, 4> index({ 1,3,0,2 });
-    MatrixXd I2_x(ll, ll); I2_x = MatrixCast(T.shuffle(index), ll, ll);
-    cout<<"start"<<endl;
-    RDM1 gamma = RDM1(n,no,2,E_nuc,ovlp,I1,I2,I2_x);
-    
-    cout.precision(10);
-    cout<<Muller_func.E(&gamma)<<endl;
-    gamma.opti(&Muller_func,"analitycal","test.txt");
-    cout<<Muller_func.E(&gamma)<<endl;
-    return 0;
-}*/
