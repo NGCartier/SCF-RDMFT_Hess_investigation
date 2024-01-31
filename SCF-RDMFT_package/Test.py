@@ -56,10 +56,10 @@ O2 = gto.M(atom = [['O', (-1,0,0)], ['O', (1,0,0)]], basis = 'sto3g')
 N2 = gto.M(atom = [['N', (-0.55,0,0)], ['N',(0.54,0,0)]], spin = 0)
 HF = gto.M(atom = [['H', (-0.46,0,0)], ['F',(0.45,0,0)]], spin = 0)
 
-HF_pvdz = gto.M(atom = [['H',(0,0,1.73)],['F',(0,0,0)]],basis = 'cc-pvtz',
+HF_pvtz = gto.M(atom = [['H',(0,0,1.73)],['F',(0,0,0)]],basis = 'cc-pvtz',
                      unit='Bohr')
 
-N2_pvdz = gto.M(atom = [['N',(0,0,-1.037)],['N',(0,0,1.037)]],basis = 'cc-pvtz',
+N2_pvtz = gto.M(atom = [['N',(0,0,-1.037)],['N',(0,0,1.037)]],basis = 'cc-pvtz',
                      unit='Bohr')
 
 CH3OH_pvdz = gto.M(atom = [['C',(-0.0461,0.6544,0)],     ['O',(-0.0461,-0.7454,0)],
@@ -143,7 +143,7 @@ C4H10O_pvdz = gto.M(atom= [['C',(1.3594	,-0.3333,0.0000)],['C',(0.0000,0.3432,0.
 
 mol_list = [('H2O',H2O_pvdz), ('CH4',CH4_pvdz)
            ,('CH3OH',CH3OH_pvdz), ('C2H6',C2H6_pvdz),
-           ('C3H8',C3H8_pvdz), ('HF',HF_pvdz), ('N2',N2_pvdz)]
+           ('C3H8',C3H8_pvdz), ('HF',HF_pvtz), ('N2',N2_pvtz)]
 
 #to run to evaluate the energy for all the molecules of mol_list
 def auto_test(mol_list):
