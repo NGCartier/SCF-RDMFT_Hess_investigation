@@ -3,6 +3,7 @@ Modification of the SCF-RDMFT repository with exact and different approximations
 
 To build the library use makefile,
 Requires: 
+  - CMake
   - C++ 17,
   - Python 3.8 and pybind11, for interface with Python,
   - PySCF for 1 and 2 electron integrals
