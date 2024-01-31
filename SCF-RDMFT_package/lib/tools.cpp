@@ -45,14 +45,14 @@ void print_t(chrono::high_resolution_clock::time_point t1, chrono::high_resoluti
     t_min -= t_hour*60;
     cout<<t_hour<<"h"<<t_min<<"'";
 }
-
+// Sign function 
 double sign(const double x){
-    return (x>0) - (x<0);
+    return (x>=0) - (x<0);
 }
 
+//Smooth function returning 0 if x<< x0 and 1 if x>> x0 in log scale
+//s determines how sharp the function is around x0.
 double Activation_log(const double x,const double x0, const double s){
-    //smooth function returning 0 if x<< x0 and 1 if x>> x0 in log scale
-    //s determines how sharp the function is around alpha.
     double y = s*log10(x/x0);
     return (erf(y)+1.)/2.;
 }
