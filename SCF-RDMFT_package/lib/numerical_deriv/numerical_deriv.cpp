@@ -11,7 +11,7 @@ using namespace Eigen;
 
 #include<iomanip>
 //Compute a numerical approximation of the gradiaent of the functional func at 1RDM gamma
-//(used to test things)
+//(for testing purpose)
 VectorXd grad_func(Functional* func, RDM1* gamma, bool do_n, bool do_no, double epsi){
     int l = gamma->size(); int ll = l*(l+1)/2; VectorXd res (ll);
     if (do_n){
@@ -40,7 +40,7 @@ const int K = 8; //Number of Richardson iterations
 const double T =2.; //Numuber to wich the step is divided at each iteration
 
 //Compute a numerical approximation of the Hessian of the functional func at 1RDM gamma
-//(used to test things, requires analytical gradient)
+//(for testing purpose, requires analytical gradient)
 MatrixXd hess_func(Functional* func, RDM1* gamma, bool do_n, bool do_no, double epsi){
     int l = gamma->size(); int ll = l*(l+1)/2; MatrixXd res =MatrixXd::Zero(ll,ll);
     if (do_n){
@@ -99,78 +99,9 @@ MatrixXd hess_func(Functional* func, RDM1* gamma, bool do_n, bool do_no, double 
     else{return res;}
 }
 
+//Kronecker delta
 MatrixXd delta(int l,int i, int j){
     MatrixXd res = MatrixXd::Zero(l,l);
     res(i,j) = 1.;
     return res;
-}
-
-// Numerical approximation of the Hessian of the functional func at 1RDM gamma in (n,U) space
-MatrixXd hess_aux(Functional* func, RDM1* gamma, bool do_n, bool do_no, double epsi){
-    int l = gamma->size(); int l2 = l*l; MatrixXd res = MatrixXd::Zero(l2+l,l2+l);
-    if (do_n){
-        for(int i=0;i<l;i++){
-            RDM1 gamma_p (gamma); RDM1 gamma_m (gamma); 
-            gamma_p.set_sqrtn(i,gamma->sqrtn(i)+epsi); gamma_m.set_sqrtn(i,gamma->sqrtn(i)-epsi);
-            double Ep = func->E(&gamma_p); double E0 = func->E(gamma); double Em = func->E(&gamma_m);
-            res(i,i) = (Ep -2.*E0 + Em)/(epsi*epsi);
-            for(int j=0;j<i;j++){
-                RDM1 gamma_pp (gamma); RDM1 gamma_p0 (gamma); RDM1 gamma_0p (gamma); 
-                RDM1 gamma_m0 (gamma); RDM1 gamma_0m (gamma); RDM1 gamma_mm (gamma);
-                gamma_pp.set_sqrtn(i,gamma->sqrtn(i)+epsi); gamma_pp.set_sqrtn(j,gamma->sqrtn(j)+epsi);
-                gamma_p0.set_sqrtn(i,gamma->sqrtn(i)+epsi); gamma_0p.set_sqrtn(j,gamma->sqrtn(j)+epsi); 
-                gamma_m0.set_sqrtn(i,gamma->sqrtn(i)-epsi); gamma_0m.set_sqrtn(j,gamma->sqrtn(j)-epsi);
-                gamma_mm.set_sqrtn(i,gamma->sqrtn(i)-epsi); gamma_mm.set_sqrtn(j,gamma->sqrtn(j)-epsi);
-                double Epp = func->E(&gamma_pp); double Ep0 = func->E(&gamma_p0); double E0p = func->E(&gamma_0p); 
-                double Em0 = func->E(&gamma_m0); double E0m = func->E(&gamma_0m); double Emm = func->E(&gamma_mm);
-                double E00 = func->E(gamma);
-                res(i,j) = (Epp-Ep0-E0p+2.*E00-Em0-E0m+Emm)/(2.*epsi*epsi);
-                res(j,i) = res(i,j);
-            }
-        }
-    }
-    if (do_no){
-        for (int i=0;i<l;i++){
-            for (int j=0;j<l;j++){
-                for (int p=0;p<l;p++){
-                    for (int q=0;q<l;q++){
-                        int id1 = (i+1)*l+j; int id2 = (p+1)*l+q;
-                        RDM1 gamma_pp (gamma); RDM1 gamma_p0 (gamma); RDM1 gamma_0p (gamma); 
-                        RDM1 gamma_m0 (gamma); RDM1 gamma_0m (gamma); RDM1 gamma_mm (gamma);
-                        MatrixXd delta_ij = delta(l,i,j); MatrixXd delta_pq = delta(l,p,q);
-                        gamma_pp.set_no(gamma_pp.no+epsi*delta_ij); gamma_pp.set_no(gamma_pp.no+epsi*delta_pq);
-                        gamma_p0.set_no(gamma_p0.no+epsi*delta_ij); gamma_0p.set_no(gamma_0p.no+epsi*delta_pq); 
-                        gamma_m0.set_no(gamma_m0.no-epsi*delta_ij); gamma_0m.set_no(gamma_0m.no-epsi*delta_pq);
-                        gamma_mm.set_no(gamma_mm.no-epsi*delta_ij); gamma_mm.set_no(gamma_mm.no-epsi*delta_pq);
-                        double Epp = func->E(&gamma_pp); double Ep0 = func->E(&gamma_p0); double E0p = func->E(&gamma_0p); 
-                        double Em0 = func->E(&gamma_m0); double E0m = func->E(&gamma_0m); double Emm = func->E(&gamma_mm);
-                        double E00 = func->E(gamma);
-                        res(id1,id2) = (Epp-Ep0-E0p+2.*E00-Em0-E0m+Emm)/(2.*epsi*epsi); 
-                    }
-                }
-            }
-        }
-    }
-    if(do_n && do_no){
-        for(int i=0;i<l;i++){
-            for (int p=0;p<l;p++){
-                for (int q=0;q<l;q++){
-                    RDM1 gamma_pp (gamma); RDM1 gamma_p0 (gamma); RDM1 gamma_0p (gamma); 
-                    RDM1 gamma_m0 (gamma); RDM1 gamma_0m (gamma); RDM1 gamma_mm (gamma);
-                    MatrixXd delta_pq = delta(l,p,q); int id = (p+1)*l+q;
-                    gamma_pp.set_sqrtn(i,gamma->sqrtn(i)+epsi); gamma_pp.set_no(gamma->no+epsi*delta_pq);
-                    gamma_p0.set_sqrtn(i,gamma->sqrtn(i)+epsi); gamma_0p.set_no(gamma->no+epsi*delta_pq); 
-                    gamma_m0.set_sqrtn(i,gamma->sqrtn(i)-epsi); gamma_0m.set_no(gamma->no-epsi*delta_pq);
-                    gamma_mm.set_sqrtn(i,gamma->sqrtn(i)-epsi); gamma_mm.set_no(gamma->no-epsi*delta_pq);
-                    double Epp = func->E(&gamma_pp); double Ep0 = func->E(&gamma_p0); double E0p = func->E(&gamma_0p); 
-                    double Em0 = func->E(&gamma_m0); double E0m = func->E(&gamma_0m); double Emm = func->E(&gamma_mm);
-                    double E00 = func->E(gamma);
-                    res(i,id) = (Epp-Ep0-E0p+2.*E00-Em0-E0m+Emm)/(2.*epsi*epsi); res(id,i) = res(i,id);
-                }
-            }
-        }
-    }
-    if (do_n &&(not do_no)){return res.block(0,0,l,l);}
-    if (do_no &&(not do_n)){return res.block(l,l,l2,l2);}   
-    else{return res;}
 }
