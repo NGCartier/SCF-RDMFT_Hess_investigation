@@ -17,23 +17,26 @@ def compute_1RDM(mol, guess="HF", func="Muller", disp=0, epsi = 1e-8, Maxiter=10
     Parameters
     ----------
     mol : Molecule class (from PySCF)
-        molecule to optimize.
+        molecule on wich the ground state energy is computed
     guess : string or None, optional
-        Initial guess method. The default is "CISD".
-        If None initialises with NO = Id, occ = [2,2,...,1]
+        Initial guess method. The default is "HF" (Hartree-Fock orbitals with Fermi-Dirac like occupations).
+        If "CISD" get 1RDM from CISD computation.
+        If "None" initialises with NO = Id, occ = [1,...,1,0,...,0] (s.t. occ.sum() = number of electrons).
     func : string, optional
-        Functional to use. The default is "Muller".
-    hess : Hessian approximation, SR1 or BFGS or the anaitycal Hessian
-    file : name of the filve where the energy and Hessian /iteration are saved
+        Functional to use (either "Muller" or "HF" for this implementation). The default is "Muller".
+    hess : Hessian approximation, (BFGS, exa for analytical Hessian..., see classes/1RDM.cpp for detail) 
+    file : name of the file where the energy, iteration number, gradient and step are saved
 
     Returns
     -------
-    E : float
-        Enegy of the groud state.
     occ : array_like
         Array of the occupations of the state in natural orbital basis
     NO : matrix_like
         Matrix to go from natural to atomic orbitals   
+    Prints
+    ------
+     E : float
+        Ground state energy of mol.
     """
     if guess=="HF":
         n, no, ne, Enuc, overlap, elec1int, elec2int  = rdm_guess (mol)
@@ -99,7 +102,7 @@ def rdm_guess (mol,  beta=0.6):
 
 
 def rdm_guess_CISD(mol):
-    '''Return 1RDM for molecule mol using CISD'''
+    '''Return the 1RDM for the molecule mol using CISD'''
     mf = scf.ROHF(mol)
     #mf = scf.addons.frac_occ(mf)
     mf.kernel()
@@ -122,6 +125,7 @@ def rdm_guess_CISD(mol):
             mol.intor('int2e').reshape(l**2,l**2) )
 
 def No_init(mol):
+    '''Return a 1RDM for the molecule mol'''
     l = mol.nao
     S = mol.intor('int1e_ovlp')
     No = np.real(sc.linalg.sqrtm( np.linalg.inv( S ) ) )
