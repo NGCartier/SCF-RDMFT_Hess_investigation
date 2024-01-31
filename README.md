@@ -9,7 +9,7 @@ Requires:
   - fmt libaray for formatting, 
   - GSL libaray for math functions,
   - Eigen 3, for matrix library,
-  - LAPACK and BLAS, to speed up Eigen.\
+  - LAPACK and BLAS, to speed up Eigen.
     
 Uses fides-cpp (https://github.com/dweindl/fides-cpp).
 
