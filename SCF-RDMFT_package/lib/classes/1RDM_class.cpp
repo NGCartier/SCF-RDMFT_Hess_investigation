@@ -866,7 +866,6 @@ tuple<double,int> opti_nno(RDM1* gamma, Functional* func, string hess_approx, of
     f_data.x1 = VectorXd::Zero(ll); f_data.grad1 = func->grad_E(gamma); f_data.E1 = func->E(gamma);
     f_data.niter=0; f_data.ofile = ofile;  
     f_data.do_1st_iter = true; f_data.interval = INT_MAX; 
-    f_data.exa_nn = false; f_data.exa_NONO = false; f_data.exa_nNO = false; 
     
     fides::Options options; options.maxiter = maxiter; options.refine_stepback = false; 
     options.fatol = 1e-17; options.frtol = 1e-17; options.xtol = epsilon; 
