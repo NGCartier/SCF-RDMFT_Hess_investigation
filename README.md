@@ -29,7 +29,6 @@ Arguments:\
   - use BFGS, DFP, SR1, exa (exact Hessian) or Zero (reduce the Hessian to the cheap part) to use the corresponding Hessian,
   - add _aux to the Hessian in the NU space,it is then possible to use tBFGS or sBFGS,
   - add _exastart to start with the exact Hessian,
-  - add _nn, _NONO, _nNO to use the occ-occ, NO-NO, occ-NO block of the exact hessian (repsectively),
   - add hybrid_m, to use the exact Hessian every m iterations.
   
 -string file, path and name of the file where the output data will be writen :\
