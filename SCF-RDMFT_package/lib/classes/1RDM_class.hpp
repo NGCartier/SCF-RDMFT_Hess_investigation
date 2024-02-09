@@ -14,7 +14,7 @@ typedef struct{
     string hess_approx; MatrixXd hess_; MatrixXd hess_exp_; MatrixXd hess_cheap_; 
     VectorXd x1; VectorXd x2; VectorXd grad1; VectorXd grad2; double E1; double E2;
     deque<VectorXd> lstep; deque<VectorXd> ly; int memory; double epsi;
-    bool exa_nn; bool exa_NONO; bool exa_nNO; bool do_1st_iter; bool update_hess; bool mixed; int interval;
+    bool do_1st_iter; bool update_hess; bool mixed; int interval;
 }data_struct;
  
 // Defines the 1RDM class (see 1RDM_class.cpp for more detail)
