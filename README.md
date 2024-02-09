@@ -27,7 +27,7 @@ Arguments:\
 -int Maxiter, the maximum number of iteration per macro iteration,\
 -string hess_approx, defines the expesnive part of the Hessian to use during the optimisation (detail in classes/1RDM_class.cpp in the opti_aux function):
   - use BFGS, DFP, SR1, exa (exact Hessian) or Zero (reduce the Hessian to the cheap part) to use the corresponding Hessian,
-  - add _aux to the Hessian in the NU space,it is then possible to use tBFGS or sBFGS,
+  - add _aux to the Hessian in the NU space,it is then possible to use tBFGS or bBFGS,
   - add _exastart to start with the exact Hessian,
   - add hybrid_m, to use the exact Hessian every m iterations.
   
