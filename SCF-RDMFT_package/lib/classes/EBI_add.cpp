@@ -73,7 +73,7 @@ tuple<double,double,double> compute_N (RDM1* gamma){
         double dderf_i= dderf(gamma->x(i)+gamma->mu(0));  
         N  += pow(erf_i,2.)/2.;
         dN += erf_i*derf_i;
-        ddN+= pow(erf_i,2.) + erf_i*dderf_i;
+        ddN+= pow(derf_i,2.) + erf_i*dderf_i;
     }
     return make_tuple(N,dN,ddN);
 }
