@@ -65,60 +65,44 @@ void test(string func, VectorXd occ, MatrixXd orbital_mat, int ne, double Enuc,
     cout<<setprecision(6)<<endl;
     MatrixXd g (l,l); g=gamma.mat();
     
-    
-    
     auto functional = Funcs.find(func); 
-    
-    //code to test expression of the gradient and Hessian
-    /*VectorXd grad_num = grad_func(&functional->second,&gamma);
+
+    /*//code to test expression of the gradient and Hessian
+    VectorXd grad_num = grad_func(&functional->second,&gamma);
     VectorXd grad_test= functional->second.grad_E(&gamma);
 
-    //MatrixXd hess_ref = functional->second.hess_E_exa(&gamma);
-    
-    MatrixXd hess_ref = functional->second.hess_E(&gamma);
-    MatrixXd J = functional->second.Jac(&gamma); MatrixXd Jt = J.transpose();
-    MatrixXd hess_test= functional->second.hess_E_cheap(&gamma);
-    
-    double error = (hess_ref - hess_test).cwiseAbs().maxCoeff();
-    cout<<"Max Hess error="<<error<<endl;
-    if (l<=8){
-        ll = l*(l-1)/2;
-        //dndn
-        cout<<hess_ref.block(0,0,l,l)<<endl<<endl;
-        cout<<hess_test.block(0,0,l,l)<<endl;
-        cout<<endl<<endl; 
-        //dNOdNO  
-        cout<<hess_ref.block(l,l,ll,ll)<<endl<<endl;
-        cout<<hess_test.block(l,l,ll,ll)<<endl;
-        cout<<endl<<endl;
-        //dndNO
-        cout<<hess_ref.block(0,l,l,ll)<<endl<<endl;
-        cout<<hess_test.block(0,l,l,ll)<<endl;
-        cout<<endl<<endl;
+    MatrixXd hess_num = hess_func(&functional->second,&gamma);
+    MatrixXd hess_test= functional->second.hess_E_exa(&gamma);
 
-    }*/
+    cout<<"grad num ="<<grad_num.transpose()<<endl;
+    cout<<"grad test="<<grad_test.transpose()<<endl;
 
-    //code to test compuation scaling of the Hessian
-    /*
-    auto t0 = chrono::high_resolution_clock::now(); int nrec = 5;
+    if(l<7){
+        cout<<"occ block:"<<endl;
+        cout<<hess_num.block(0,0,l,l)<<endl<<endl;
+        cout<<hess_test.block(0,0,l,l)<<endl<<endl;
+        cout<<"coupling block:"<<endl;
+        cout<<hess_num.block(0,l,l,l2-l).transpose()<<endl<<endl;
+        cout<<hess_test.block(0,l,l,l2-l).transpose()<<endl<<endl;
+        cout<<"NO block:"<<endl;
+        cout<<hess_num.block(l,l,l2-l,l2-l)<<endl<<endl;
+        cout<<hess_test.block(l,l,l2-l,l2-l)<<endl<<endl;
+    }
+    */
+    
+    auto t0 = chrono::high_resolution_clock::now(); int nrec = 50;
     
     for (int i = 0;i<nrec;i++){
-        functional->second.hess_E(&gamma,true);
+        functional->second.hess_E_exa(&gamma);
     }
     auto t1 = chrono::high_resolution_clock::now();
-    cout<<"H occ     computation=";print_t(t1,t0,nrec); cout<<endl;
+    cout<<"H exa computation=";print_t(t1,t0,nrec); cout<<endl;
     auto t2 = chrono::high_resolution_clock::now();
     for (int i = 0;i<nrec;i++){
-        functional->second.hess_E(&gamma,false,true);
+        functional->second.hess_E(&gamma);
     }
     auto t3 = chrono::high_resolution_clock::now();
-    cout<<"H NO      computation=";print_t(t3,t2,nrec); cout<<endl;
-    auto t4 = chrono::high_resolution_clock::now();
-    for (int i = 0;i<nrec;i++){
-        functional->second.hess_E(&gamma,false,false,true);
-    }
-    auto t5 = chrono::high_resolution_clock::now();
-    cout<<"H coupled computation=";print_t(t5,t4,nrec); cout<<endl;*/
+    cout<<"H cheap computation=";print_t(t3,t2,nrec); cout<<endl;
 }
 
 /* 
