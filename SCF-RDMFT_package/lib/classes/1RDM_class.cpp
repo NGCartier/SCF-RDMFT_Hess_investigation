@@ -532,7 +532,7 @@ void RDM1::opti(Functional* func, string hess_approx, string file, int disp, dou
     double epsi_nno_bis = epsi_nno; 
     MatrixXd hess_nno;
 
-    while( ( abs((E_bis-E)/E)>epsi ) && k<maxiter){ 
+    while( ( abs(E_bis-E)>epsi ) && k<maxiter){ 
         k++; E_bis = E; epsi_nno_bis = epsi_nno;
         auto t0 = chrono::high_resolution_clock::now();
         auto res = opti_nno(this, func, hess_approx, &ofile, epsi_nno, detailed_disp, maxiter);
