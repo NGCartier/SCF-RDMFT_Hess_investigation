@@ -31,9 +31,10 @@ using namespace Eigen;
 
 #include "Functionals/HF.hpp"
 #include "Functionals/Muller.hpp"
+#include "Functionals/Power.hpp"
 
 //Dictionary of functionals 
-map<string, Functional> Funcs = {{"E1",E1_func},{"Hartree",Hartree_func},{"HF",HF_func},{"Muller",Muller_func}};
+map<string, Functional> Funcs = {{"E1",E1_func},{"Hartree",Hartree_func},{"HF",HF_func},{"Muller",Muller_func},{"Power",Power_func}};
 
 // Wrapper to python code
 #include <pybind11/pybind11.h>
