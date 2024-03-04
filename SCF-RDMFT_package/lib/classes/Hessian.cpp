@@ -181,7 +181,7 @@ MatrixXd vMap(deque<VectorXd> v){
 /* Update using the LBFGS approximation (called in x-space)*/
 void LBFGS(void* f_data){
     // https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.139.9400&rep=rep1&type=pdf Equation (2.3)
-   
+    // Version incompatible with trust-region : need to keep in memory only successful steps
     data_struct *data = (data_struct*) f_data; 
     if(data->niter==0){ return ;} 
     VectorXd step = data->x2 - data->x1; VectorXd psi = data->grad2 - data->grad1 - data->hess_cheap_*step;
