@@ -651,8 +651,6 @@ fides::cost_fun_ret_t f_dir(DynamicVector<double> X0, DynamicVector<double> X, v
             hess_ret(i,j) = data->hess_(i,j); hess_ret(j,i) = data->hess_(i,j); 
         }
     }
-    data->gamma->set_no(NO);
-    data->niter++;
 
     //Returns/writes results
     /*MatrixXd hess_exa = data->func->hess_E_exa(data->gamma);
@@ -671,6 +669,10 @@ fides::cost_fun_ret_t f_dir(DynamicVector<double> X0, DynamicVector<double> X, v
     <<" #eigvl_tot="<<neigvals.size()<<" #eigvl_n="<<negative_eigvls(hess_exa.block(0,0,l,l)).size()\
     <<" #eigvl_no="<<negative_eigvls(hess_exa.block(l,l,ll-l,ll-l)).size()<<" mean_eigvl="<<eigvals.cwiseAbs().mean()<<" max_neigvl="<<neigvals.lpNorm<Infinity>()\
     <<" mean_ovlp="<<vct_s_ovlp.cwiseAbs().mean()<<" max_novlp="<<nvct_s_ovlp.lpNorm<Infinity>()*/<<endl;
+    
+    data->gamma->set_no(NO);
+    data->niter++;
+    
     return make_tuple(E,grad_ret,hess_ret);
     };
 
@@ -728,7 +730,6 @@ fides::cost_fun_ret_t f_aux(DynamicVector<double> X0, DynamicVector<double> X, v
             data->hess_ += Jt*data->hess_exp_*J;
         }
     }
-    data->gamma->set_no(NO);
 
     DynamicVector<double> grad_ret (ll); DynamicMatrix<double> hess_ret (ll,ll); 
     for (int i=0;i<ll;i++){
@@ -737,7 +738,6 @@ fides::cost_fun_ret_t f_aux(DynamicVector<double> X0, DynamicVector<double> X, v
             hess_ret(i,j) = data->hess_(i,j); hess_ret(j,i) = data->hess_(j,i); 
         }
     }
-    data->niter++;
 
     //Returns/writes results
     /*MatrixXd hess_exa = data->func->hess_E_exa(data->gamma);
@@ -756,6 +756,10 @@ fides::cost_fun_ret_t f_aux(DynamicVector<double> X0, DynamicVector<double> X, v
     <<" #eigvl_tot="<<neigvals.size()<<" #eigvl_n="<<negative_eigvls(hess_exa.block(0,0,l,l)).size()\
     <<" #eigvl_no="<<negative_eigvls(hess_exa.block(l,l,ll-l,ll-l)).size()<<" mean_eigvl="<<eigvals.cwiseAbs().mean()<<" max_neigvl="<<neigvals.lpNorm<Infinity>()\
     <<" mean_ovlp="<<vct_s_ovlp.cwiseAbs().mean()<<" max_novlp="<<nvct_s_ovlp.lpNorm<Infinity>()*/<<endl;
+    
+    data->gamma->set_no(NO);
+    data->niter++;
+    
     return make_tuple(E,grad_ret,hess_ret);
     };
 
