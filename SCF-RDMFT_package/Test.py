@@ -38,7 +38,7 @@ H2O_pvdz = gto.M(atom = [['O', (0,0,0)],['H',(a*np.cos(alpha),np.sin(alpha),0)],
                     ['H',(-a*np.cos(alpha),np.sin(alpha),0)]], basis = 'cc-pvdz',
                      unit='Bohr')
 H2O_pvtz = gto.M(atom = [['O', (0,0,0)],['H',(a*np.cos(alpha),np.sin(alpha),0)],
-                    ['H',(-a*np.cos(alpha),a*np.sin(alpha),0)]], basis = 'cc-pvtz',
+                    ['H',(-a*np.cos(alpha),np.sin(alpha),0)]], basis = 'cc-pvtz',
                      unit='Bohr')
 
 H_He = gto.M(atom = [['H', (-1/2,0,0)], ['He', (1/2,0,0)]], basis = 'sto3g', spin=1)
