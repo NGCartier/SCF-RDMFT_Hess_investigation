@@ -52,7 +52,7 @@ def compute_1RDM(mol, guess="HF", func="Muller", disp=0, epsi = 1e-8, Maxiter=10
 
 def rdm_guess (mol,  beta=0.6):
     '''Returns the 1RDM of the mol molecule using HF orbitals and Fermi-Dirac distribtution'''
-    def FD_occ (E,i, mu):  return 2/(1+np.exp(-beta*(E[i]-mu ) ) )
+    def FD_occ (E,i, mu):  return 2/(1+np.exp(beta*(E[i]-mu ) ) )
 
     mf = scf.RHF(mol) 
     #mf = scf.addons.frac_occ(mf)
