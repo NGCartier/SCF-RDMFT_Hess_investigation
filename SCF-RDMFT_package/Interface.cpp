@@ -70,29 +70,15 @@ void test(string func, VectorXd occ, MatrixXd orbital_mat, int ne, double Enuc,
     
     auto functional = Funcs.find(func); 
 
-    //code to test expression of the gradient and Hessian
+    /*//code to test expression of the gradient and Hessian
     VectorXd grad_num = grad_func(&functional->second,&gamma);
     VectorXd grad_test= functional->second.grad_E(&gamma);
 
     MatrixXd hess_num = hess_func(&functional->second,&gamma);
     MatrixXd hess_test= functional->second.hess_E_exa(&gamma);
-
+    
     cout<<"grad num ="<<grad_num.transpose()<<endl;
     cout<<"grad test="<<grad_test.transpose()<<endl;
-
-    cout<<"J="<<endl;
-    MatrixXd J = functional->second.Jac(&gamma,true);
-    cout<<J<<endl;
-    cout<<"Jinv="<<endl;
-    MatrixXd Jinv = functional->second.InvJac(&gamma,true);
-    cout<<Jinv<<endl;
-    MatrixXd Jm1 = J.completeOrthogonalDecomposition().pseudoInverse();
-    cout<<"J^-1="<<endl;
-    cout<<Jm1<<endl;
-    cout<<"Jinv*J="<<endl;
-    cout<<Jinv*J<<endl;
-    cout<<"J-1*J="<<endl;
-    cout<<Jm1*J<<endl;
 
     if(l<=7){
         cout<<"occ block:"<<endl;
@@ -105,8 +91,7 @@ void test(string func, VectorXd occ, MatrixXd orbital_mat, int ne, double Enuc,
         cout<<hess_num.block(l,l,l2-l,l2-l)<<endl<<endl;
         cout<<hess_test.block(l,l,l2-l,l2-l)<<endl<<endl;
     }
-    /*
-    
+    */
     auto t0 = chrono::high_resolution_clock::now(); 
     
     for (int i = 0;i<nrec;i++){
@@ -119,7 +104,7 @@ void test(string func, VectorXd occ, MatrixXd orbital_mat, int ne, double Enuc,
         functional->second.hess_E(&gamma);
     }
     auto t3 = chrono::high_resolution_clock::now();
-    cout<<"H cheap computation=";print_t(t3,t2,nrec); cout<<endl;*/
+    cout<<"H cheap computation=";print_t(t3,t2,nrec); cout<<endl;
 }
 
 /* 
