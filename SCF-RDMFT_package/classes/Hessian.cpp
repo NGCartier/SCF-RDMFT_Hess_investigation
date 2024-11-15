@@ -124,7 +124,7 @@ void BFGS_aux(void* f_data){//also called bBFGS or nuBFGS
     int l = data->gamma->size(); 
     VectorXd step = data->x2 - data->x1; VectorXd psi = data->grad2 - data->grad1 - data->hess_cheap_*step;
     MatrixXd J = data->func->Jac(data->gamma); 
-    MatrixXd Jinv = data->func->InvJac(data->gamma).transpose(); // /!\ inefficiant methode   
+    MatrixXd Jinv = data->func->InvJac(data->gamma).transpose();  
     VectorXd s = J*step; VectorXd y = Jinv*psi;
     if(data->niter==1 && data->do_1st_iter){ data->hess_exp_ = 1e-6*MatrixXd::Identity(l*l+l,l*l+l);} //look for soemthing more 'subtle' but better than yTs/yTy, and 0 for some reason
     double sNorm = s.norm(); 
@@ -138,7 +138,7 @@ void tBFGS_aux(void* f_data){//also called xBFGS
     if(data->niter==0){ return ;}
     VectorXd step = data->x2 - data->x1; VectorXd y = data->grad2 - data->grad1;
     MatrixXd J = data->func->Jac(data->gamma); MatrixXd Jt = J.transpose();
-    MatrixXd Jinv = data->func->InvJac(data->gamma).transpose(); // /!\ inefficiant methode   
+    MatrixXd Jinv = data->func->InvJac(data->gamma).transpose();    
     MatrixXd Htilde = Jt*data->hess_exp_*J + data->hess_cheap_; 
     VectorXd Hs = Htilde*step;
     VectorXd u = Jinv*y; VectorXd v = Jinv*Hs;  
@@ -154,7 +154,7 @@ void sBFGS_aux(void* f_data){
     data_struct *data = (data_struct*) f_data; 
     if(data->niter==0){ return ;}
     MatrixXd J = data->func->Jac(data->gamma); MatrixXd Jt = J.transpose();
-    MatrixXd Jinv = data->func->InvJac(data->gamma).transpose(); // /!\ inefficiant methode
+    MatrixXd Jinv = data->func->InvJac(data->gamma).transpose(); 
     VectorXd step = data->x2 - data->x1; VectorXd y = data->grad2 - data->grad1 -(ddE1(data->gamma) - Jt*data->func->ddE_Hxc_aux(data->gamma)*J)*step; 
     MatrixXd Htilde = Jt*data->hess_exp_*J  + data->func->ddJac(data->gamma); 
     VectorXd Hs = Htilde*step;
@@ -170,7 +170,7 @@ void dBFGS_aux(void* f_data){
     data_struct *data = (data_struct*) f_data; 
     if(data->niter==0){ return ;}
     MatrixXd J = data->func->Jac(data->gamma); MatrixXd Jt = J.transpose();
-    MatrixXd Jinv = data->func->InvJac(data->gamma).transpose(); // /!\ inefficiant methode
+    MatrixXd Jinv = data->func->InvJac(data->gamma).transpose(); 
     MatrixXd Jtinv = Jinv.transpose();
     VectorXd step = data->x2 - data->x1; VectorXd rho = data->grad2 - data->grad1 -Jtinv*data->hess_cheap_*Jinv*step; 
     MatrixXd Htilde = data->hess_exp_  + Jtinv*data->hess_cheap_*Jinv; 
@@ -233,7 +233,7 @@ void LBFGS_aux(void* f_data){
     if(data->niter==0){ return ;}
     VectorXd step = data->x2 - data->x1; VectorXd psi = data->grad2 - data->grad1 - data->hess_cheap_*step;
     MatrixXd J = data->func->Jac(data->gamma); 
-    MatrixXd Jinv = data->func->InvJac(data->gamma).transpose(); // /!\ inefficiant methode   
+    MatrixXd Jinv = data->func->InvJac(data->gamma).transpose();   
     VectorXd s = J*step; VectorXd y = Jinv*psi;
     double lambda = s.dot(y)/s.squaredNorm();
 
@@ -265,7 +265,7 @@ void LbBFGS_aux(void* f_data){
     if(data->niter==0){ return ;}
     VectorXd step = data->x2 - data->x1; VectorXd psi = data->grad2 - data->grad1 - data->hess_cheap_*step;
     MatrixXd J = data->func->Jac(data->gamma); 
-    MatrixXd Jinv = data->func->InvJac(data->gamma).transpose(); // /!\ inefficiant methode   
+    MatrixXd Jinv = data->func->InvJac(data->gamma).transpose();   
     VectorXd s = J*step; VectorXd v = data->hess_exp_*s; 
     VectorXd u = Jinv*psi;
     double lambda = s.dot(u)/s.squaredNorm();
