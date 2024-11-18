@@ -11,9 +11,10 @@ class Functional; class optimizer;
 //Structure used to pass the functional and 1RDM to optimizer methods
 typedef struct{
     RDM1* gamma; Functional* func; int g; MatrixXd NO; int niter; ofstream* ofile; bool disp;
-    string hess_approx; MatrixXd hess_; MatrixXd hess_exp_; MatrixXd hess_cheap_; 
+    string hess_approx; MatrixXd hess_; MatrixXd hess_exp_; MatrixXd hess_exp_nu; MatrixXd hess_cheap_; 
     VectorXd x1; VectorXd x2; VectorXd grad1; VectorXd grad2; double E1; double E2;
     deque<VectorXd> lstep; deque<VectorXd> ly; int memory; double epsi; 
+    deque<VectorXd> lu; deque<VectorXd> lv; deque<double> luTu; deque<double> lvTv; 
     bool do_nn; bool do_NONO; bool do_nNO; bool do_1st_iter; bool update_hess; bool mixed; bool r_diag;
     int interval;
 }data_struct;
@@ -78,7 +79,7 @@ tuple<VectorXd,MatrixXd,VectorXd,MatrixXd> negative_eigvects(MatrixXd M,double e
 
 //Hessian updates
 void SR1 (void*); void BFGS (void*); void DFP (void*); void Broyden (void*); void LBFGS (void*); void ZERO (void*); 
-void SR1_aux (void*); void BFGS_aux(void*); void tBFGS_aux(void*); void sBFGS_aux(void*); void dBFGS_aux(void*); void LBFGS_aux(void*); void LbBFGS_aux(void*); void ZERO_aux (void*); 
+void SR1_aux (void*); void BFGS_aux (void*); void tBFGS_aux(void*); void sBFGS_aux(void*); void dBFGS_aux(void*); void LBFGS_aux(void*); void LbBFGS_aux(void*); void ZERO_aux (void*); 
 void H_init (MatrixXd*,VectorXd,VectorXd,int len=0); 
 
 

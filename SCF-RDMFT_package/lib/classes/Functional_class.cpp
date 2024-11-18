@@ -262,15 +262,21 @@ MatrixXd Functional::Jac(RDM1* gamma, bool only_n, bool only_no) const{
 MatrixXd Functional::InvJac(RDM1* gamma, bool only_n, bool only_no) const{
     int l = gamma->size(); int ll = l*(l+1)/2; int l2 =l*l;
     MatrixXd J = MatrixXd::Zero(ll,l2+l);
-    //Approximate pseudo-inverse (occ block of J is not invertible because has a 0 eigenvalue comming from mu)
-    //since only one 0 eigenvalue, becomes exact in the limit l->infinity 
+    
     if (not only_no){
-        for(int i=0;i<l;i++){
-            J.block(0,i,l,1) = gamma->dx_sqrtn(i).diagonal();
+        //True pseudo-inverse but more expensive
+        if (l<30){
+            J.block(0,0,l,l) = Jac(gamma,true).completeOrthogonalDecomposition().pseudoInverse();
         }
+        //Approximate pseudo-inverse (occ block of J is not invertible because has a 0 eigenvalue comming from mu)
+        //since only one 0 eigenvalue, becomes exact in the limit l->infinity 
+        else{
+            for(int i=0;i<l;i++){
+                J.block(0,i,l,1) = gamma->dx_sqrtn(i).diagonal();
+            }
+        }
+        
     }
-    //True pseudo-inverse but more expensive
-    // J.block(0,0,l,l) = Jac(gamma,true).completeOrthogonalDecomposition().pseudoInverse();
     if(not only_n){
         int index=l; MatrixXd I = MatrixXd::Identity(l,l);
         for(int i=0;i<l;i++){

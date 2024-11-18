@@ -750,7 +750,7 @@ fides::cost_fun_ret_t f_aux(DynamicVector<double> X0, DynamicVector<double> X, v
         //on a successfull step we have to update the reference points
         if(data->hess_approx == "dBFGS"){
             //get x and grad in nu space
-            MatrixXd J = data->func->Jac(data->gamma); MatrixXd Jt = J.transpose();
+            MatrixXd J = data->func->Jac(data->gamma); 
             MatrixXd Jinv = data->func->InvJac(data->gamma).transpose(); 
             data->x1 = J*x; data->grad1 = Jinv*data->func->grad_E(data->gamma); data->E1 = data->func->E(data->gamma);
         }
@@ -759,9 +759,10 @@ fides::cost_fun_ret_t f_aux(DynamicVector<double> X0, DynamicVector<double> X, v
         }
         return make_tuple(0,DynamicVector<double>(0),DynamicMatrix<double>(0,0));
     }
-    MatrixXd J = data->func->Jac(data->gamma); MatrixXd Jt = J.transpose(); MatrixXd Jinv;
+    MatrixXd J;  MatrixXd Jinv;
 
     if(data->hess_approx == "dBFGS"){
+        J = data->func->Jac(data->gamma);
         Jinv = data->func->InvJac(data->gamma).transpose(); 
         data->x2 = J*x;
     }
@@ -796,18 +797,18 @@ fides::cost_fun_ret_t f_aux(DynamicVector<double> X0, DynamicVector<double> X, v
         else{ throw::invalid_argument("Unknown Hessian approximation. "); }
         data->hess_ = data->hess_cheap_;  
         if(!data->do_NONO){ //only use the occupation block of the expensive part of the Hessian
-            data->hess_exp_.block(0,l,l,l2) = MatrixXd::Zero(l,l2);
-            data->hess_exp_.block(l,0,l2,l) = MatrixXd::Zero(l2,l);
-            data->hess_exp_.block(l,l,l2,l2) = MatrixXd::Zero(l2,l2);
+            data->hess_exp_.block(0,l,l,ll-l) = MatrixXd::Zero(l,ll-l);
+            data->hess_exp_.block(l,0,ll-l,l) = MatrixXd::Zero(ll-l,l);
+            data->hess_exp_.block(l,l,ll-l,ll-l) = MatrixXd::Zero(ll-l,ll-l);
         }
-        
         if (data->mixed){ 
             double snNorm  = (x-x0).segment(0,l)                                                                                                                                .lpNorm<Infinity>(); if(data->niter==0){snNorm=1;}
-            data->hess_ += (1.-Activation_log(snNorm,EPSILON,BETA))*Jt*data->hess_exp_*J;
+            data->hess_ += (1.-Activation_log(snNorm,EPSILON,BETA))*data->hess_exp_;
         }
         else {
-            data->hess_ += Jt*data->hess_exp_*J;
+            data->hess_ += data->hess_exp_;
         }
+        data->hess_exp_ = MatrixXd::Zero(ll,ll); //have to rebuild hess_exp_, cannot accumulate in aux
     }
     if(!data->do_nNO){
         data->hess_.block(0,l,l,ll-l) = MatrixXd::Zero(l,ll-l); //remove coupling
@@ -894,7 +895,6 @@ tuple<double,int> opti_nno(RDM1* gamma, Functional* func, string hess_approx, of
         f_data.hess_approx = "LBFGS";
         string::size_type p = hess_approx.find("LBFGS");
         if(p != string::npos){
-            //Use exact Hessian every M iterations
             int M;
             string::size_type p2 = hess_approx.find('_',p+7);
             if (p2 == string::npos){ M = 10; }
@@ -945,12 +945,24 @@ tuple<double,int> opti_nno(RDM1* gamma, Functional* func, string hess_approx, of
             //Use the exact Hessian at 1st iteration
             MatrixXd hess_exa = func->hess_E(gamma); 
             f_data.hess_ = hess_exa; f_data.do_1st_iter = false;
-            f_data.hess_exp_ = func->x_space_hess(gamma,&hess_exa);
+            f_data.hess_exp_ = MatrixXd::Identity(ll,ll);
+            f_data.hess_exp_nu = func->x_space_hess(gamma,&hess_exa);
             
         }
         else{
             f_data.hess_ = MatrixXd::Identity(ll,ll); 
-            f_data.hess_exp_ = MatrixXd::Identity(l2+l,l2+l);
+            f_data.hess_exp_ = MatrixXd::Identity(ll,ll);
+            f_data.hess_exp_nu = MatrixXd::Identity(l2+l,l2+l);
+        }
+        string::size_type p = hess_approx.find("_aux");
+        if(p != string::npos){
+            int M;
+            string::size_type p2 = hess_approx.find('_',p+6);
+            if (p2 == string::npos){ M = 30; }
+            else{
+                string m = hess_approx.substr(p+5,p2-p-1); M = stoi(m);
+            }  
+            f_data.memory = M; 
         }
     }
     else{

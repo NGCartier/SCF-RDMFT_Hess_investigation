@@ -102,16 +102,26 @@ void SR1_aux(void* f_data){
     if(data->niter==0){ return ;}
     int l = data->gamma->size();
     VectorXd step = data->x2 - data->x1; VectorXd psi = data->grad2 - data->grad1 - data->hess_cheap_*step;
-    MatrixXd J = data->func->Jac(data->gamma); 
-    MatrixXd Jinv = data->func->InvJac(data->gamma).transpose();  
+    MatrixXd J = data->func->Jac(data->gamma); MatrixXd Jt = J.transpose();
+    MatrixXd Jinv = data->func->InvJac(data->gamma).transpose(); 
     VectorXd s = J*step; VectorXd y = Jinv*psi;
-    if(data->niter==1 && data->do_1st_iter){ data->hess_exp_ = 1e-6*MatrixXd::Identity(l+l*l, l+l*l);}
+    if(data->niter==1 && data->do_1st_iter){ data->hess_exp_nu = 1e-6*MatrixXd::Identity(l+l*l, l+l*l);}
     double sNorm = s.norm(); 
-    VectorXd u = y -data->hess_exp_*s; double uNorm = u.norm();
+    VectorXd u = y -data->hess_exp_nu*s; double uNorm = u.norm();
     double sigma = u.dot(s); 
     if(abs(sigma) >precision*sNorm*uNorm){
-        data->hess_exp_ += u*u.transpose()/sigma;
+        data->lu.push_back(u); data->luTu.push_back(sigma);
+        if(data->lu.size()> data->memory){
+            data->lu.pop_front(); data->luTu.pop_front();
+        }
+        data->hess_exp_nu += u*u.transpose()/sigma;
+        for (int i=0;i<data->lu.size();i++){
+            VectorXd ui = data->lu[i];
+            VectorXd Ju= Jt*u;
+            data->hess_exp_ += Ju*Ju.transpose()/data->luTu[i];
+        }
         data->update_hess = true;
+        
     }
     else{
         data->update_hess = false;
@@ -123,14 +133,23 @@ void BFGS_aux(void* f_data){//also called bBFGS or nuBFGS
     if(data->niter==0){ return ;}
     int l = data->gamma->size(); 
     VectorXd step = data->x2 - data->x1; VectorXd psi = data->grad2 - data->grad1 - data->hess_cheap_*step;
-    MatrixXd J = data->func->Jac(data->gamma); 
+    MatrixXd J = data->func->Jac(data->gamma); MatrixXd Jt = J.transpose();
     MatrixXd Jinv = data->func->InvJac(data->gamma).transpose();  
     VectorXd s = J*step; VectorXd y = Jinv*psi;
-    if(data->niter==1 && data->do_1st_iter){ data->hess_exp_ = 1e-6*MatrixXd::Identity(l*l+l,l*l+l);} //look for soemthing more 'subtle' but better than yTs/yTy, and 0 for some reason
+    if(data->niter==1 && data->do_1st_iter){ data->hess_exp_nu = 1e-6*MatrixXd::Identity(l*l+l,l*l+l);} //look for soemthing more 'subtle' but better than yTs/yTy, and 0 for some reason
     double sNorm = s.norm(); 
-    VectorXd Hs = data->hess_exp_* s; double HsNorm = Hs.norm();
+    VectorXd Hs = data->hess_exp_nu*s; double HsNorm = Hs.norm();
     double sTy = s.dot(y); double sHs = s.dot(Hs);
-    data->hess_exp_ += y*y.transpose()/sTy - Hs*Hs.transpose()/sHs;    
+    data->hess_exp_nu += y*y.transpose()/sTy - Hs*Hs.transpose()/sHs;  
+    data->lu.push_back(y); data->lv.push_back(Hs); data->luTu.push_back(sTy); data->lvTv.push_back(sHs);
+    if(data->lu.size()> data->memory){
+        data->lu.pop_front(); data->lv.pop_front(); data->luTu.pop_front(); data->lvTv.pop_front();
+    }
+    for (int i=0;i<data->lu.size();i++){ // O(N_basis^4 min(N_memory,N_iter))
+            VectorXd u = data->lu[i]; VectorXd v = data->lv[i];
+            VectorXd Ju= Jt*u; VectorXd Jv = Jt*v;
+            data->hess_exp_ += Ju*Ju.transpose()/data->luTu[i] - Jv*Jv.transpose()/data->lvTv[i];
+    }
 }
 
 void tBFGS_aux(void* f_data){//also called xBFGS
@@ -138,15 +157,24 @@ void tBFGS_aux(void* f_data){//also called xBFGS
     if(data->niter==0){ return ;}
     VectorXd step = data->x2 - data->x1; VectorXd y = data->grad2 - data->grad1;
     MatrixXd J = data->func->Jac(data->gamma); MatrixXd Jt = J.transpose();
-    MatrixXd Jinv = data->func->InvJac(data->gamma).transpose();    
-    MatrixXd Htilde = Jt*data->hess_exp_*J + data->hess_cheap_; 
+    MatrixXd Jinv = data->func->InvJac(data->gamma).transpose();  
+    MatrixXd Htilde = Jt*data->hess_exp_nu*J + data->hess_cheap_; 
     VectorXd Hs = Htilde*step;
     VectorXd u = Jinv*y; VectorXd v = Jinv*Hs;  
     if(data->niter==1 && data->do_1st_iter){ 
         int l = data->gamma->size();
-        data->hess_exp_ = MatrixXd::Zero(l+l*l,l+l*l); }
+        data->hess_exp_nu = MatrixXd::Zero(l+l*l,l+l*l); }
     double sHs = step.dot(Hs); double sTy = step.dot(y);
-    data->hess_exp_ += u*u.transpose()/sTy - v*v.transpose()/sHs;
+    data->hess_exp_nu += u*u.transpose()/sTy - v*v.transpose()/sHs;
+    data->lu.push_back(u); data->lv.push_back(v); data->luTu.push_back(sTy); data->lvTv.push_back(sHs);
+    if(data->lu.size()> data->memory){
+        data->lu.pop_front(); data->lv.pop_front(); data->luTu.pop_front(); data->lvTv.pop_front();
+    }
+    for (int i=0;i<data->lu.size();i++){ // O(N_basis^4 min(N_memory,N_iter))
+            VectorXd u = data->lu[i]; VectorXd v = data->lv[i];
+            VectorXd Ju= Jt*u; VectorXd Jv = Jt*v;
+            data->hess_exp_ += Ju*Ju.transpose()/data->luTu[i] - Jv*Jv.transpose()/data->lvTv[i];
+    }
 }
 
 void sBFGS_aux(void* f_data){  
@@ -156,30 +184,48 @@ void sBFGS_aux(void* f_data){
     MatrixXd J = data->func->Jac(data->gamma); MatrixXd Jt = J.transpose();
     MatrixXd Jinv = data->func->InvJac(data->gamma).transpose(); 
     VectorXd step = data->x2 - data->x1; VectorXd y = data->grad2 - data->grad1 -(ddE1(data->gamma) - Jt*data->func->ddE_Hxc_aux(data->gamma)*J)*step; 
-    MatrixXd Htilde = Jt*data->hess_exp_*J  + data->func->ddJac(data->gamma); 
+    MatrixXd Htilde = Jt*data->hess_exp_nu*J  + data->func->ddJac(data->gamma); 
     VectorXd Hs = Htilde*step;
     VectorXd u = Jinv*y; VectorXd v = Jinv*Hs;  
     if(data->niter==1 && data->do_1st_iter){ 
         int l = data->gamma->size();
-        data->hess_exp_ = MatrixXd::Zero(l+l*l,l+l*l); }
+        data->hess_exp_nu = MatrixXd::Zero(l+l*l,l+l*l); }
     double sHs = step.dot(Hs); double sTy = step.dot(y);
-    data->hess_exp_ += u*u.transpose()/sTy - v*v.transpose()/sHs;
+    data->hess_exp_nu += u*u.transpose()/sTy - v*v.transpose()/sHs;
+    data->lu.push_back(u); data->lv.push_back(v); data->luTu.push_back(sTy); data->lvTv.push_back(sHs);
+    if(data->lu.size()> data->memory){
+        data->lu.pop_front(); data->lv.pop_front(); data->luTu.pop_front(); data->lvTv.pop_front();
+    }
+    for (int i=0;i<data->lu.size();i++){ // O(N_basis^4 min(N_memory,N_iter))
+            VectorXd u = data->lu[i]; VectorXd v = data->lv[i];
+            VectorXd Ju= Jt*u; VectorXd Jv = Jt*v;
+            data->hess_exp_ += Ju*Ju.transpose()/data->luTu[i] - Jv*Jv.transpose()/data->lvTv[i];
+    }
 }
 
 void dBFGS_aux(void* f_data){  
     data_struct *data = (data_struct*) f_data; 
     if(data->niter==0){ return ;}
     MatrixXd J = data->func->Jac(data->gamma); MatrixXd Jt = J.transpose();
-    MatrixXd Jinv = data->func->InvJac(data->gamma).transpose(); 
+    MatrixXd Jinv = data->func->InvJac(data->gamma); 
     MatrixXd Jtinv = Jinv.transpose();
     VectorXd step = data->x2 - data->x1; VectorXd rho = data->grad2 - data->grad1 -Jtinv*data->hess_cheap_*Jinv*step; 
-    MatrixXd Htilde = data->hess_exp_  + Jtinv*data->hess_cheap_*Jinv; 
+    MatrixXd Htilde = data->hess_exp_nu  + Jtinv*data->hess_cheap_*Jinv; 
     VectorXd Hs = Htilde*step; 
     if(data->niter==1 && data->do_1st_iter){ 
         int l = data->gamma->size();
-        data->hess_exp_ = MatrixXd::Zero(l+l*l,l+l*l); }
+        data->hess_exp_nu = MatrixXd::Zero(l+l*l,l+l*l); }
     double sHs = step.dot(Hs); double sTrho = step.dot(rho);
-    data->hess_exp_ += rho*rho.transpose()/sTrho - Hs*Hs.transpose()/sHs;
+    data->hess_exp_nu += rho*rho.transpose()/sTrho - Hs*Hs.transpose()/sHs;
+    data->lu.push_back(rho); data->lv.push_back(Hs); data->luTu.push_back(sTrho); data->lvTv.push_back(sHs);
+    if(data->lu.size()> data->memory){
+        data->lu.pop_front(); data->lv.pop_front(); data->luTu.pop_front(); data->lvTv.pop_front();
+    }
+    for (int i=0;i<data->lu.size();i++){ // O(N_basis^4 min(N_memory,N_iter))
+            VectorXd u = data->lu[i]; VectorXd v = data->lv[i];
+            VectorXd Ju= Jt*u; VectorXd Jv = Jt*v;
+            data->hess_exp_ += Ju*Ju.transpose()/data->luTu[i] - Jv*Jv.transpose()/data->lvTv[i];
+    }
 }
 
 MatrixXd vMap(deque<VectorXd> v){
@@ -232,8 +278,8 @@ void LBFGS_aux(void* f_data){
     data_struct *data = (data_struct*) f_data; 
     if(data->niter==0){ return ;}
     VectorXd step = data->x2 - data->x1; VectorXd psi = data->grad2 - data->grad1 - data->hess_cheap_*step;
-    MatrixXd J = data->func->Jac(data->gamma); 
-    MatrixXd Jinv = data->func->InvJac(data->gamma).transpose();   
+    MatrixXd J = data->func->Jac(data->gamma); MatrixXd Jt = J.transpose();
+    MatrixXd Jinv = data->func->InvJac(data->gamma).transpose();    
     VectorXd s = J*step; VectorXd y = Jinv*psi;
     double lambda = s.dot(y)/s.squaredNorm();
 
@@ -251,9 +297,10 @@ void LBFGS_aux(void* f_data){
     U.block(0,0,S.rows(),S.cols()) = lambda*S;    U.block(0,S.cols(),S.rows(),S.cols()) = Y;
     Gamma.block(0,0,D.rows(),D.cols()) = -D;      Gamma.block(0,D.cols(),L.cols(),L.rows()) = L.transpose();
     Gamma.block(D.rows(),0,L.rows(),L.cols()) = L;Gamma.block(D.rows(),D.cols(),S.cols(),S.cols()) = lambda*STS;
-    MatrixXd InvGamma = Gamma.inverse(); 
+    MatrixXd InvGamma = Gamma.inverse(); MatrixXd JU = Jt*U;
     if (InvGamma.norm()>precision){
-        data->hess_exp_ = /*lambda* MatrixXd::Identity(l2,l2)*/ -U*InvGamma*U.transpose();
+        data->hess_exp_nu = /*lambda* MatrixXd::Identity(l2,l2)*/ -U*InvGamma*U.transpose();
+        data->hess_exp_   = -JU*InvGamma*U.transpose();
     }
     else{ 
         cout<<"Hessian not updated : too small denominator."<<endl;
@@ -264,9 +311,9 @@ void LbBFGS_aux(void* f_data){
     data_struct *data = (data_struct*) f_data; 
     if(data->niter==0){ return ;}
     VectorXd step = data->x2 - data->x1; VectorXd psi = data->grad2 - data->grad1 - data->hess_cheap_*step;
-    MatrixXd J = data->func->Jac(data->gamma); 
-    MatrixXd Jinv = data->func->InvJac(data->gamma).transpose();   
-    VectorXd s = J*step; VectorXd v = data->hess_exp_*s; 
+    MatrixXd J = data->func->Jac(data->gamma); MatrixXd Jt = J.transpose();
+    MatrixXd Jinv = data->func->InvJac(data->gamma).transpose();  
+    VectorXd s = J*step; VectorXd v = data->hess_exp_nu*s; 
     VectorXd u = Jinv*psi;
     double lambda = s.dot(u)/s.squaredNorm();
 
@@ -284,9 +331,10 @@ void LbBFGS_aux(void* f_data){
     U.block(0,0,S.rows(),S.cols()) = lambda*S;    U.block(0,S.cols(),S.rows(),S.cols()) = Y;
     Gamma.block(0,0,D.rows(),D.cols()) = -D;      Gamma.block(0,D.cols(),L.cols(),L.rows()) = L.transpose();
     Gamma.block(D.rows(),0,L.rows(),L.cols()) = L;Gamma.block(D.rows(),D.cols(),S.cols(),S.cols()) = lambda*STS;
-    MatrixXd InvGamma = Gamma.inverse(); 
+    MatrixXd InvGamma = Gamma.inverse(); MatrixXd JU = Jt*U;
     if (InvGamma.norm()>precision){
-        data->hess_exp_ = /*lambda* MatrixXd::Identity(l2,l2)*/ -U*InvGamma*U.transpose();
+        data->hess_exp_nu = /*lambda* MatrixXd::Identity(l2,l2)*/ -U*InvGamma*U.transpose();
+        data->hess_exp_   = -JU*InvGamma*U.transpose();
     }
     else{ 
         cout<<"Hessian not updated : too small denominator."<<endl;
