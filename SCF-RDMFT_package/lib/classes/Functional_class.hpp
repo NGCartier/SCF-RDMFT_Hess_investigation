@@ -41,6 +41,7 @@ class Functional{
         MatrixXd ddE_Hxc_aux(RDM1*, bool only_n=false, bool only_no=false, bool only_coupled=false) const; 
 
         MatrixXd Jac(RDM1*,bool only_n=false,bool only_no=false) const;
+        MatrixXd InvJac(RDM1*,bool only_n=false,bool only_no=false) const;
         MatrixXd ddJac(RDM1*, bool only_n=false, bool only_no=false) const;
         MatrixXd dv_J(RDM1*,int) const; MatrixXd dv_K(RDM1*,int) const; 
         MatrixXd compute_WJ(RDM1*) const;    MatrixXd compute_WK(RDM1*) const; 

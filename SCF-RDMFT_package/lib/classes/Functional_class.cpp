@@ -22,7 +22,6 @@ using namespace Eigen;
                                        (n the occupations, J Coulomb, K exchange)
         see K.J.H. "Giesbertz, Avoiding the 4-index transformation in one-body reduced density matrix functional calculations for 
             separable functionals", Phys. Chem. Chem. Phys. 18, 21024-21031 (2016)
-        is_J_func wether WJ is simply the Hartree term (false if it is)
 */
 
 Functional::Functional(MatrixXd(*W_K)(RDM1*), VectorXd(*dW_K)(RDM1*), bool is_J_func, VectorXd(*dW_K_subspace)(RDM1*,int), VectorXd (*n_K)(RDM1*), 
@@ -40,31 +39,29 @@ bool Functional::needs_subspace() const{
     return dW_K_subspace_ != nullptr;
 }
 
-//Computes the energy for the 1RDM gamma for the functional
+//Computes the energy of gamma for the functional
 double Functional::E(RDM1* gamma) const {
     int l = gamma->size();
     MatrixXd W_J(l,l); W_J = compute_WJ(gamma); MatrixXd W_K(l,l); W_K = compute_WK(gamma);
     return E1(gamma) + E_Hxc(&W_J,&W_K); 
 }
-//Computes the energy for the 1RDM gamma for the functional given W_J and W_K already computed
+
 double Functional::E(RDM1* gamma, MatrixXd* W_J, MatrixXd* W_K) const {
     return E1(gamma) + E_Hxc(W_J,W_K); 
 }
 
-//Computes the gradient of the energy for the 1RDM gamma for the functional
-//if only_n = false return the derivatives respect to the NOs
-//if only_no = false return the derivatives respect to the occupations
+//Computes the gradient of the energy of gamma for the functional
+//if only_n = False return the derivatives respect to the NOs
+//if only_no = False return the derivatives respect to the occupations
 VectorXd Functional::grad_E(RDM1* gamma, bool only_n, bool only_no) const {
     MatrixXd W_J = compute_WJ(gamma); MatrixXd W_K = compute_WK(gamma);
     return dE1(gamma, only_n, only_no) + dE_Hxc(gamma, &W_J,&W_K, only_n, only_no); 
 }
 
-//Computes the gradient of the energy for the 1RDM gamma for the functional given W_J and W_K already computed
 VectorXd Functional::grad_E(RDM1* gamma, MatrixXd* W_J, MatrixXd* W_K, bool only_n, bool only_no) const {
     return dE1(gamma, only_n, only_no) + dE_Hxc(gamma, W_J, W_K, only_n, only_no); 
 }
 
-//Computes the gradient of the energy for the 1RDM gamma for the functional for a given subspace g
 VectorXd Functional::grad_E_subspace(RDM1* gamma, int g) const{
     //Derivative of the energy resp to the occ, for only one subspace of PNOF Omega, assuming J fuctional.
     MatrixXd W_K = compute_WK(gamma); int l = gamma->size();
@@ -74,25 +71,23 @@ VectorXd Functional::grad_E_subspace(RDM1* gamma, int g) const{
     }
     return dE1_bis+dE_Hxc_subspace(gamma, g);
 }
-
-//Compute the Hessian of the energy for the 1RDM gamma for the functional
-// using exact Hessian
+//Compute Hessian of the energy of gamma for the functional
+// if auxhess is a not provided use the exact Hessian
 MatrixXd Functional::hess_E_exa(RDM1* gamma, bool only_n, bool only_no, bool only_coupled) const{
     return ddE1(gamma,only_n,only_no) + ddE_Hxc(gamma,only_n,only_no,only_coupled);
 }
-// using a approximate Hessian 
+
 MatrixXd Functional::hess_E(RDM1* gamma, bool only_n, bool only_no, bool only_coupled) const{
     return ddE1(gamma,only_n,only_no) + ddE_Hxc_k(gamma, only_n, only_no, only_coupled); 
 }
 
-//Compute the cheap part of the energy for the 1RDM gamma for the functional
 MatrixXd Functional::hess_E_cheap(RDM1* gamma, bool only_n, bool only_no, bool only_coupled) const{
     //Mathematically equivalent to hess_E but numerical error is enought to alter the convergence
     MatrixXd J = Jac(gamma);
     return ddE1(gamma,only_n,only_no) + J.transpose()*ddE_Hxc_aux(gamma, only_n, only_no, only_coupled)*J + ddJac(gamma,only_n,only_no); 
 }
 
-//Computes the functional independant part of the energy (1 electron par and nuclear energy constant)
+//Computes the functional independant part of the energy (1 electron and nuclei)
 double E1(RDM1* gamma){
     MatrixXd g = gamma->mat();
     return gamma->E_nuc + compute_E1(&gamma->int1e,&g);
@@ -127,7 +122,6 @@ VectorXd dE1(RDM1* gamma, bool only_n, bool only_no){
     }
     
 }
-
 //Computes the Hessian of the 1 electron part of the energy
 MatrixXd ddE1(RDM1* gamma, bool only_n, bool only_no){
     int l = gamma->size(); int ll = l*(l-1)/2; 
@@ -138,14 +132,15 @@ MatrixXd ddE1(RDM1* gamma, bool only_n, bool only_no){
     if (not only_no){
         for (int i=0;i<l;i++){
             for (int j=0;j<i+1;j++){
-                MatrixXd dg = gamma->ddn(i,j);
-                ddE1(i,j) = compute_E1(&H,&dg);
+                ddE1(i,j) = 0;
+                for (int k=0;k<l;k++){
+                    ddE1(i,j) += H(k,k) * gamma->ddn(k,i,j);
+                }
                 ddE1(j,i) = ddE1(i,j);
             }
         }
     }
     if (not only_n){
-        
         for (int i=0;i<l;i++){
             for (int j=0;j<i;j++){
                 for (int p=0;p<=i;p++){
@@ -185,6 +180,7 @@ MatrixXd ddE1(RDM1* gamma, bool only_n, bool only_no){
     else{ return ddE1; }
     }
 }
+
 
 //Computes the part of the Hessian of the 1 electron requireing only 1st derivative respect to E
 MatrixXd ddE1_k(RDM1* gamma, bool only_n, bool only_no){
@@ -230,15 +226,16 @@ MatrixXd ddE1_k(RDM1* gamma, bool only_n, bool only_no){
 }
 
 
-// Compute the contraction of a 1RDM g (matrix form) and a 1 electron integral H
+// Compute the 1 electron part of the energy
 double compute_E1(MatrixXd* H, MatrixXd* g){
+    
     int l = g->rows(); int ll = pow(l,2);
     MatrixXd res (1,1); res =  H->reshaped(1,ll) * g->reshaped(ll,1);
     return res(0,0);
 
 }
 
-// Compute the Jacobian of the transformation between the NU-space and the x-space 
+// Compute the Jacobian of the transformation between (n,U) space and the space of parameters
 MatrixXd Functional::Jac(RDM1* gamma, bool only_n, bool only_no) const{
     int l = gamma->size(); int ll = l*(l+1)/2; int l2 =l*l;
     MatrixXd J = MatrixXd::Zero(l2+l,ll);
@@ -261,9 +258,35 @@ MatrixXd Functional::Jac(RDM1* gamma, bool only_n, bool only_no) const{
     else {return J;}
 }
 
-//Convert an x-space Hessian hess to NU-space
+// Compute the Inverse of the Jacobian of the transformation between (n,U) space and the space of parameters
+MatrixXd Functional::InvJac(RDM1* gamma, bool only_n, bool only_no) const{
+    int l = gamma->size(); int ll = l*(l+1)/2; int l2 =l*l;
+    MatrixXd J = MatrixXd::Zero(ll,l2+l);
+    //Approximate pseudo-inverse (occ block of J is not invertible because has a 0 eigenvalue comming from mu)
+    //since only one 0 eigenvalue, becomes exact in the limit l->infinity 
+    if (not only_no){
+        for(int i=0;i<l;i++){
+            J.block(0,i,l,1) = gamma->dx_sqrtn(i).diagonal();
+        }
+    }
+    //True pseudo-inverse but more expensive
+    // J.block(0,0,l,l) = Jac(gamma,true).completeOrthogonalDecomposition().pseudoInverse();
+    if(not only_n){
+        int index=l; MatrixXd I = MatrixXd::Identity(l,l);
+        for(int i=0;i<l;i++){
+            for (int j=0;j<i;j++){
+                J.block(index,l,1,l2) = dU(&I,i,j).reshaped(1,l2)/2.;
+                index++;
+            }
+        }
+    }
+    if(only_n){return J.block(0,0,l,l);}
+    else if(only_no){return J.block(l,l,ll-l,l2);}
+    else {return J;}
+}
+
 MatrixXd Functional::x_space_hess(RDM1* gamma,MatrixXd* hess) const{
-    MatrixXd invJ = Jac(gamma).completeOrthogonalDecomposition().pseudoInverse();
+    MatrixXd invJ = InvJac(gamma);
     if (invJ.rows()!=hess->cols()){
         throw invalid_argument("Dimensions of the Jacobian and Hessian are not consistantes.");
     }
@@ -306,7 +329,7 @@ MatrixXd Functional::dv_K(RDM1* gamma, int i) const{
     return gamma->no.transpose() * res * gamma->no;
 }
 
-// Compute the W_J W_K matrices (contraction of v_J and v_K with a 1RDM) in NO basis (see Constructor operator)
+// Compute the W_J W_K matrices in NO basis
 MatrixXd Functional::compute_WJ(RDM1* gamma) const{
     int l = gamma->size(); 
     if (is_J_func_){ 
@@ -322,12 +345,10 @@ MatrixXd Functional::compute_WJ(RDM1* gamma) const{
     return W;
 }
 
-// Calls W_K for a given functional
 MatrixXd Functional::compute_WK(RDM1* gamma) const{
     return W_K_(gamma);
 }
 
-// Compute the tensor contraction between the matrix a and rank-4 tensor b along indices i and j
 Tensor<double,4> Tensor_prod(MatrixXd a, Tensor<double,4> b, int i, int j){
     int l=-1;
     if (i==1){l=a.rows();}
@@ -349,7 +370,7 @@ Tensor<double,4> Tensor_prod(MatrixXd a, Tensor<double,4> b, int i, int j){
     return res;
 }
 
-// Compute Wbar_J Wbar_K (quantities similar to W_K and W_J used in Hessian respect to the NOs)
+// Compute Wbar_J Wbar_K (used in Hessian respect to rotations)
 Tensor<double,4> Functional::compute_Wbar_J(RDM1* gamma) const{
     int l = gamma->size(); 
     if (is_J_func_){ 
@@ -478,7 +499,6 @@ VectorXd Functional::dE_Hxc(RDM1* gamma, bool only_n, bool only_no) const{
     else{return dE2;}}
 }
 
-// Compute the gradiant of the Hatree exchange correlation energy gradient given W_J and W_K already computed
 VectorXd Functional::dE_Hxc(RDM1* gamma, MatrixXd* W_J, MatrixXd* W_K, bool only_n, bool only_no) const{
     int l = gamma->size(); int ll = l*(l+1)/2; VectorXd dE2 (ll);  
     if (not only_no){
@@ -575,7 +595,7 @@ MatrixXd Functional::ddE_Hxc(RDM1* gamma, bool only_n, bool only_no, bool only_c
     else{ return ddE2;}}
 }
 
-//Compute the Hartree exchange correlation part of the cheap Hessian of E_Hxc
+//Compute the part of the cheap Hessian of E_Hxc
 MatrixXd Functional::ddE_Hxc_k(RDM1* gamma, bool only_n, bool only_no, bool only_coupled) const{
     int l = gamma->size(); int ll = l*(l+1)/2; MatrixXd ddE2 = MatrixXd::Zero(ll,ll);
     MatrixXd C = gamma->no; MatrixXd Ct = C.transpose(); 
@@ -636,7 +656,7 @@ MatrixXd Functional::ddE_Hxc_k(RDM1* gamma, bool only_n, bool only_no, bool only
     else{ return ddE2;}}
 }
 
-//Compute the Hartree exchange correlation part of the cheap Hessian of E_Hxc in auxiliary space 
+//Compute the part of the cheap Hessian of E_Hxc in auxiliary space 
 MatrixXd Functional::ddE_Hxc_aux(RDM1* gamma, bool only_n, bool only_no, bool only_coupled) const{
     int l = gamma->size(); int ll = l*l; MatrixXd ddE2 = MatrixXd::Zero(l+ll,l+ll);
     VectorXd NJ = gamma->n(); VectorXd NK = n_K_(gamma);
@@ -686,7 +706,7 @@ MatrixXd Functional::ddE_Hxc_aux(RDM1* gamma, bool only_n, bool only_no, bool on
     else{ return ddE2;}}
 }
 
-//Compute the Hartree exchange correlation part of the Hessian rquiering 1st order derivatives in E only 
+//Compute the part of the Hessian of E_Hxc rquiering 1st order derivatives in E
 MatrixXd Functional::ddJac(RDM1* gamma, bool only_n, bool only_no) const{
     int l = gamma->size(); int ll = l*(l+1)/2; MatrixXd ddE2 = MatrixXd::Zero(ll,ll);
     MatrixXd C = gamma->no; MatrixXd Ct = C.transpose(); 
@@ -728,14 +748,14 @@ MatrixXd Functional::ddJac(RDM1* gamma, bool only_n, bool only_no) const{
     else{ return ddE2;}}
 }
 
-// Derivative of the ubitary matrix times the matrix C at 0 respect to X_ij 
+// Auxiliary functions for the 1 electron part
 MatrixXd dU(MatrixXd* C,int i,int j){
     int l = C->rows();
     MatrixXd res = MatrixXd::Zero(l,l);
     res.col(i) = -C->col(j); res.col(j) = C->col(i);
     return res;
 }
-// 2nd derivative of the ubitary matrix times the matrix C at 0 respect to X_ij and X_kl 
+
 MatrixXd ddU(MatrixXd* C,int i,int j,int k,int l){
     int n = C->rows(); MatrixXd res = MatrixXd::Zero(n,n);
     if (i==k && j==l){ res.col(i) = -C->col(i); res.col(j) = -C->col(j); }
@@ -749,7 +769,7 @@ MatrixXd ddU(MatrixXd* C,int i,int j,int k,int l){
     }}
     return res;
 }
-// Outer product of the two vectors v1 and v2
+
 MatrixXd outer(VectorXd v1, VectorXd v2){
     int l = v1.size();
     MatrixXd res; res = MatrixXd::Zero(l,l);
@@ -760,11 +780,11 @@ MatrixXd outer(VectorXd v1, VectorXd v2){
     }
     return res;
 }
-// pth power of the vector v
+
 VectorXd pow(const VectorXd* v, double p){
     int l = v->size(); VectorXd res (l);
     for (int i=0; i<l;i++){
-        res(i) = pow(v->coeff(i),p);
+        res(i) = pow(v->coeff(i),2);
     }
     return res;
 }

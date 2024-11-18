@@ -8,7 +8,7 @@
 
 #include "1RDM_class.hpp"
 #include "Functional_class.hpp"
-#include "../tools.hpp"
+#include "../tools.hpp" 
 using namespace std;
 using namespace Eigen;
 
@@ -50,6 +50,11 @@ double erfinv(const double x){
 double arcerf(const double x){ //alias for erfinv
     return erfinv(x);
 }
+/* Derivative of the Inverse Error funtion */
+double derfinv(const double x){
+    return SQRT_PI/2.*exp(pow(erfinv(x),2));
+}
+
 /* Derivative of the Error function */
 double derf(const double x){
     if (abs(x)>DBL_MAX/2.){ //test x=inf with Ofast

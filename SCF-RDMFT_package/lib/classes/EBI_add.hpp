@@ -8,8 +8,9 @@ class Functional; class RDM1;
 
 double erfinv (const double);
 double arcerf (const double);
-double derf (const double);
-double dderf(const double);
+double derfinv(const double);
+double derf   (const double);
+double dderf  (const double);
 void solve_mu_aux(RDM1*);
 void solve_mu_subs_aux(RDM1*);
 

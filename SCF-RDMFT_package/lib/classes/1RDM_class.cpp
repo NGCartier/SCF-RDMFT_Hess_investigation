@@ -9,7 +9,7 @@
 #include <iomanip>      
 #include <chrono>
 #include <tuple>
-#include <vector>
+#include <vector> 
 
 #include "1RDM_class.hpp"
 #include "Functional_class.hpp"
@@ -133,10 +133,9 @@ RDM1::RDM1(const RDM1* gamma){
     computed_W_ = gamma->computed_W_;
     omega = gamma->omega;   
 }
-/* Destructor for the 1RDM class */
 RDM1::~RDM1(){}; 
 
-/* Affectation to the ith element of x 
+/* Affectation to x and its elements 
 (needs to be a method to update computed_V_) */
 void RDM1::x(int i, double xi){
     x_(i) = xi;
@@ -144,16 +143,14 @@ void RDM1::x(int i, double xi){
     computed_V_(g) = false;
     computed_W_(g) = false;
 }
-/* Affectation to x */
+
 void RDM1::x(VectorXd x0){
     x_ = x0;
     computed_V_ = VectorXi::Constant(omega.size(),false);
     computed_W_ = VectorXi::Constant(omega.size(),false);
 }
 
-/*Get the index of the subspace containing index i
-(Remark: needed for functional which partition the orbital space, like PNOF5,
-and will always return 0 for other functionals)*/
+/*Get the index of the subspace containing index i*/
 int RDM1::find_subspace(int i) const{
     if(omega.size()==1){ //avoid useless loop if no subspaces
         return 0;
@@ -178,12 +175,12 @@ double RDM1::n(int i) const{
 VectorXd RDM1::n() const{
     return sqrtn().cwiseAbs2();
 }
-/* Get the square root of the ith occupation */
+/* Get the squared of the ith occupation */
 double RDM1::sqrtn(int i)const{
     int g = find_subspace(i);
     return RSQRT_TWO*(erf(x(i)+mu(g))+1.);
 }
-/* Get all the square roots of the occupations */
+/* Get all the squaered roots of the occupations */
 VectorXd RDM1::sqrtn()const{
     VectorXd res (size());
     for (int i=0;i<size();i++){
@@ -195,8 +192,8 @@ VectorXd RDM1::sqrtn()const{
 /*Compute x_i cooresponding to the given occupation*/ 
 void RDM1::set_n(int i,double ni){
     int g = find_subspace(i); 
-    if (ni>2.){ x(i,4.);}
-    else if (ni<0.){ x(i,-4.);}
+    if (ni>2.-4e-8){ x(i,4.);}
+    else if (ni<4e-8){ x(i,-4.);}
     else {x(i, erfinv(SQRT_TWO*sqrt(ni)-1.)-mu(g));}
 }
 /*Compute x corresponding to the given occupations*/
@@ -208,8 +205,8 @@ void RDM1::set_n(VectorXd n){
 /*Compute x_i cooresponding to the given square root occupation*/ 
 void RDM1::set_sqrtn(int i,double ni){
     int g = find_subspace(i); 
-    if (ni>SQRT_TWO){ x(i,4.);}
-    else if (ni<=0.){ x(i,-4.);}
+    if (ni>SQRT_TWO -3e-8){ x(i,4.);}
+    else if (ni<=3e-8){ x(i,-4.);}
     else {x(i, erfinv(SQRT_TWO*ni-1.)-mu(g));}
 }
 /*Compute x corresponding to the given square root occupations*/
@@ -236,7 +233,7 @@ double RDM1::get_V(int g){
         return V_(g);
     }
 }
-/*Compute W (used in computation of the 2nd derivatives)*/
+/*Compute W */
 double RDM1::get_W(int g){
     if (computed_W_(g)){
         return W_(g);
@@ -252,14 +249,13 @@ double RDM1::get_W(int g){
     }
 }
 
-/*Computes the matrix representation of the 1RDM*/
+/*Computes the matrix form of the 1RDM*/
 MatrixXd RDM1::mat() const {
     int l = size(); 
     MatrixXd N = n().asDiagonal();
     return no*N* no.transpose();
 }
-
-/* Derivative of ith occupation respect to the jth parameter x_j */
+/* Derivative of ith occupation respect to the parameters jth parameter x_j */
 double RDM1::dn(int i, int j){
     int f = find_subspace(i);
     int g = find_subspace(j);
@@ -319,7 +315,7 @@ MatrixXd RDM1::ddn(int i, int j){
 }
 
 
-/* Derivative of the square root of the ith occupation respect to the jth parameter x_j */
+/* Derivative of the square root of ith occupation respect to the parameters jth parameter x_j */
 double RDM1::dsqrt_n(int i,int j){
     int f = find_subspace(i);
     int g = find_subspace(j);
@@ -332,7 +328,7 @@ double RDM1::dsqrt_n(int i,int j){
         return 0;
     }
 }
-/* Derivative of the square root of the occupations respect to the ith parameter x_i */
+/* Derivative of the square root of the occupations respect to the parameters ith parameter x_i */
 MatrixXd RDM1::dsqrt_n(int i){
     int l = size(); VectorXd res(l);
     int f = find_subspace(i);
@@ -383,7 +379,44 @@ MatrixXd RDM1::ddsqrt_n(int i,int j){
     return res.asDiagonal();
 }
 
-/* Compute the value of mu (shared paramerter of EBI parametrization) from x */
+
+/* Derivative of the ith parameter x_i w.r.t the square root of jth occupation */
+double RDM1::dx_sqrtn(int i,int j){
+    int f = find_subspace(i);
+    int g = find_subspace(j);
+    if(f==g){
+        double sqrtni = sqrtn(i);
+        double sqrtnj = sqrtn(j);
+        double derfinv_i = derfinv(SQRT_TWO*sqrtni-1.);
+        double derfinv_j = derfinv(SQRT_TWO*sqrtnj-1.);
+        double dmu = -derf(x(j)+mu(f))*(erf(x(j)+mu(f))+1.)/get_V(f);
+        return SQRT_TWO*((i==j)*derfinv_i -dmu*derfinv_j);
+    }
+    else{
+        return 0;
+    }
+}
+/* Derivative of the ith parameters w.r.t the square root of ith occupation */
+MatrixXd RDM1::dx_sqrtn(int i){
+    int l = size(); VectorXd res(l);
+    int f = find_subspace(i);
+    double sqrtni = sqrtn(i);
+    double derfinv_i = derfinv(SQRT_TWO*sqrtni-1.);
+    double dmu = -derf(x(i)+mu(f))*(erf(x(i)+mu(f))+1.)/get_V(f);
+
+    for (int j=0;j<l;j++){
+        int g = find_subspace(j);
+        if(f==g){
+            double sqrtnj = sqrtn(j);
+            double derfinv_j = derfinv(SQRT_TWO*sqrtnj-1.);
+            res(j) = SQRT_TWO*((i==j)*derfinv_j -dmu*derfinv_i);
+        }
+        else{ res(j) = 0; }
+    }
+    return res.asDiagonal();
+}
+
+/* Compute the value of mu (shared paramerter of EBI representation) from x */
 void RDM1::solve_mu(){
     if(omega.size()==1){
         solve_mu_aux(this); // see EBI_add.cpp
@@ -403,20 +436,18 @@ Vector<bool,Eigen::Dynamic> init_V(int l){
     return v;
 }
 
-
-/*Build the ensenble of subspaces used to compute the energy by seniority 0 based functionals (like PNOF5) :
+/*Build the ensenble of subspaces used to compute the energy by some functionals (PNOF7 for now) :
 Works such that a subspace is composed of 1 occupied and any number of unoccupied natural orbitals of 
-expoentioanlly decreasing occupation.
-Remark: not called by the functionals available in htis code. */
+expoentioanlly decreasing occupation.*/
 void RDM1::subspace() {
     // Requires 2*Nocc = N_elec (usually the cas but not for [0.66, 0.66, 0.66] for ex.)
     omega.clear();
     int l = size(); int Nocc = 0;
     for (int i = 0; i < l; i++) {
-        if (x(i) > -mu_(0)) { Nocc++; } 
+        if (x(i) > -mu(0)) { Nocc++; } 
     }
     int N_omega = l/Nocc; int N_res = l%Nocc; 
-    mu_ = VectorXd::Constant(Nocc,0.); 
+    mu = VectorXd::Constant(Nocc,0.); 
     V_ = VectorXd::Constant(Nocc,0); computed_V_ = VectorXi::Constant(Nocc,false);
     W_ = VectorXd::Constant(Nocc,0); computed_W_ = VectorXi::Constant(Nocc,false);
     if(l >= n_elec){
@@ -472,7 +503,18 @@ void RDM1::subspace() {
     }
 }
 
-/* Return the negative (<epsi) eigenvalues of the matrix M */
+VectorXd zero_eigvls(MatrixXd M,double epsi){
+    VectorXd eigs  = M.selfadjointView<Upper>().eigenvalues();
+    vector<double>neigvls; 
+    for (int i=0;i<eigs.size();i++){
+        if(eigs(i)<epsi && eigs(i)>-epsi){
+            neigvls.push_back(eigs(i));
+        }
+    }
+    VectorXd res = VectorXd::Map(neigvls.data(),neigvls.size());
+    return res;
+}
+
 VectorXd negative_eigvls(MatrixXd M,double epsi){
     VectorXd eigs  = M.selfadjointView<Upper>().eigenvalues();
     vector<double>neigvls; 
@@ -485,8 +527,6 @@ VectorXd negative_eigvls(MatrixXd M,double epsi){
     return res;
 }
 
-/* Return the eigenvalues and negative (<epsi) eigenvalues, as well as corresponding 
-eigenvectors of the matrix M */
 tuple<VectorXd,MatrixXd,VectorXd,MatrixXd> negative_eigvects(MatrixXd M,double epsi){
     SelfAdjointEigenSolver<MatrixXd> solver(M);
     VectorXd eigvls  = solver.eigenvalues();
@@ -506,19 +546,18 @@ tuple<VectorXd,MatrixXd,VectorXd,MatrixXd> negative_eigvects(MatrixXd M,double e
     return make_tuple(ret_vls,ret_vcts,eigvls,eigvects);
 }
 
-/*Optimises the natural occupations (n) and NOs (no) of the 1RDM with respect to the energy minimisation
+/*Optimises the occupations (n) and NOs (no) of the 1RDM with respect to the energy minimisation
 \param args func: the functional to use
-            hess_approx: the approximation used for the expensive part of the Hessian (see opti_nno for detail)
-            file: file where the outputs per iteration will be saved
             disp: if >1 displais details about the computation
             epsi: relative precision required for the optimisation
-            epsi_nno: relative precision required for the optimisation of the occupations and NOs (default =epsi)
+            epsi_n: relative precision required for the optimisation of the occupations (default sqrt(epsi))
+            epsi_no: relative precision required for the optimisation of the NOs (default sqrt(epsi))
             maxiter: maximum number of iterations for one optimisation of the NOs/occupations, and maximum number of 
                      calls to those optimisations
 the occupations and NOs are optimised in-place
 */
 void RDM1::opti(Functional* func, string hess_approx, string file, int disp, double epsi, double epsi_nno, int maxiter){
-    ofstream ofile; string path (file); 
+    ofstream ofile; string path ("/Users/nicolascartier/Documents/Programmes/Tests/Conv data/"); path.append(file); path.append(".txt");
     if(file!=""){ ofile.open(path);}
     else{ofile.setstate(ios_base::badbit);}
     cout<<setprecision(-log(epsi)+1); ofile<<setprecision(-log(epsi)+1);
@@ -532,14 +571,14 @@ void RDM1::opti(Functional* func, string hess_approx, string file, int disp, dou
     double epsi_nno_bis = epsi_nno; 
     MatrixXd hess_nno;
 
-    while( ( abs(E_bis-E)>epsi ) && k<maxiter){ 
+    while( ( abs((E_bis-E)/E)>epsi ) && k<maxiter){ 
         k++; E_bis = E; epsi_nno_bis = epsi_nno;
         auto t0 = chrono::high_resolution_clock::now();
         auto res = opti_nno(this, func, hess_approx, &ofile, epsi_nno, detailed_disp, maxiter);
         int nit_i = get<1>(res); E = get<0>(res); 
         
         auto t1 = chrono::high_resolution_clock::now();
-        ofile<<"---------"<<endl; //New macro-iteration
+        ofile<<"---------"<<endl;
         
         nit += nit_i;
         if (disp>1){
@@ -577,7 +616,6 @@ double norm1(VectorXd* x){
     return res;
 }
 
-/* Parametrization of the ubitary matrix from an antisymmeric matrix with entries l_theta */
 MatrixXd exp_unit(VectorXd* l_theta){
     int l = ((sqrt(8*l_theta->size())+1)+1)/2; int index = 0;
     MatrixXd res (l,l); 
@@ -594,7 +632,6 @@ MatrixXd exp_unit(VectorXd* l_theta){
     return res.exp();
 }
 
-/* Ojective function called by the fides optimizer in x-space */
 fides::cost_fun_ret_t f_dir(DynamicVector<double> X0, DynamicVector<double> X, void* f_data, bool accepted){
     int ll = X.size(); int l = (sqrt(8*ll+1)-1)/2; 
     VectorXd x0 = VectorXd::Map(X0.data(),ll); 
@@ -634,6 +671,11 @@ fides::cost_fun_ret_t f_dir(DynamicVector<double> X0, DynamicVector<double> X, v
         else if(data->hess_approx == "Zero"){ ZERO(f_data); }
         else{ throw::invalid_argument("Unknown Hessian approximation. "); }   
         data->hess_ = data->hess_cheap_; 
+        if(!data->do_NONO){ //only use the occupation block of the expensive part of the Hessian
+            data->hess_exp_.block(0,l,l,ll-l) = MatrixXd::Zero(l,ll-l);
+            data->hess_exp_.block(l,0,ll-l,l) = MatrixXd::Zero(ll-l,l);
+            data->hess_exp_.block(l,l,ll-l,ll-l) = MatrixXd::Zero(ll-l,ll-l);
+        }
         if (data->mixed){ 
             double snNorm  = (x-x0).segment(0,l).lpNorm<Infinity>(); if(data->niter==0){snNorm=1;}
             data->hess_ += (1.-Activation_log(snNorm,EPSILON,BETA))*data->hess_exp_;
@@ -643,8 +685,15 @@ fides::cost_fun_ret_t f_dir(DynamicVector<double> X0, DynamicVector<double> X, v
         }
         
     }
-    
-    DynamicVector<double> grad_ret (ll); DynamicMatrix<double> hess_ret (ll,ll); 
+    if(!data->do_nNO){
+        data->hess_.block(0,l,l,ll-l) = MatrixXd::Zero(l,ll-l); //remove coupling
+        data->hess_.block(l,0,ll-l,l) = MatrixXd::Zero(ll-l,l);
+    }
+    if(data->r_diag){
+        data->hess_ = data->hess_.diagonal().asDiagonal();
+    }
+
+    DynamicVector<double> grad_ret (ll); blaze::SymmetricMatrix<DynamicMatrix<double>> hess_ret (ll);
     for (int i=0;i<ll;i++){
         grad_ret[i] = grad(i);
         for (int j =0;j<=i;j++){
@@ -662,13 +711,21 @@ fides::cost_fun_ret_t f_dir(DynamicVector<double> X0, DynamicVector<double> X, v
         nvct_s_ovlp(i) = neigvects.col(i).dot(x-x0);
          vct_s_ovlp(i) =  eigvects.col(i).dot(x-x0);
 
-    }*/
-    *data->ofile<<"E="<<E<<" iter="<<data->niter<<" |grad|="<<data->grad2.norm()<<" |step|="<<(x-x0).norm()/*<<" |eigvls|="<<hess_exa.selfadjointView<Upper>().eigenvalues().norm() \
+    }
+    MatrixXd Hdiag = MatrixXd::Zero(ll,ll); for (int i=0;i<ll;i++){ Hdiag(i,i) = data->hess_(i,i);}
+    VectorXd s = (x-x0);*/
+
+    *data->ofile<<"E="<<E<<" iter="<<data->niter<<" |grad|="<<data->grad2.norm()<<" |step|="<<(x-x0).norm()\
+    /*<<" sTg_l2="<<s.transpose()*data->grad1<<" sTg_H="<<s.transpose()*data->hess_*data->grad1<<" sTg_Hd="<<s.transpose()*Hdiag*data->grad1\
+    <<" #0_eigval_tot="<<zero_eigvls(data->hess_).size()<<" #0_eigval_n="<<zero_eigvls(data->hess_.block(0,0,l,l)).size()\
+    <<" #0_eigval_no="<<zero_eigvls(data->hess_.block(l,l,ll-l,ll-l)).size()\ 
+    <<" |eigvls|="<<hess_exa.selfadjointView<Upper>().eigenvalues().norm() \
     <<" |H_er|="<<H_error.lpNorm<1>()/(ll*ll)<<" |H_er_nn|="<<H_error.block(0,0,l,l).lpNorm<1>()/(l*l)\
     <<" |H_er_NONO|="<<H_error.block(l,l,ll-l,ll-l).lpNorm<1>()/( (ll-l)*(ll-l) )<<" |H_er_nNO|="<<H_error.block(0,l,l,ll-l).lpNorm<1>()/(l*(ll-l))\
     <<" #eigvl_tot="<<neigvals.size()<<" #eigvl_n="<<negative_eigvls(hess_exa.block(0,0,l,l)).size()\
     <<" #eigvl_no="<<negative_eigvls(hess_exa.block(l,l,ll-l,ll-l)).size()<<" mean_eigvl="<<eigvals.cwiseAbs().mean()<<" max_neigvl="<<neigvals.lpNorm<Infinity>()\
-    <<" mean_ovlp="<<vct_s_ovlp.cwiseAbs().mean()<<" max_novlp="<<nvct_s_ovlp.lpNorm<Infinity>()*/<<endl;
+    <<" mean_ovlp="<<vct_s_ovlp.cwiseAbs().mean()<<" max_novlp="<<nvct_s_ovlp.lpNorm<Infinity>()\ */
+    <<endl;
     
     data->gamma->set_no(NO);
     data->niter++;
@@ -676,7 +733,7 @@ fides::cost_fun_ret_t f_dir(DynamicVector<double> X0, DynamicVector<double> X, v
     return make_tuple(E,grad_ret,hess_ret);
     };
 
-/* Ojective function called by the fides optimizer in nu-space */
+//Objective function for the occs and NOs optimistion called by the fides minimizer
 fides::cost_fun_ret_t f_aux(DynamicVector<double> X0, DynamicVector<double> X, void* f_data, bool accepted){
     int ll = X.size(); int l = (sqrt(8*ll+1)-1)/2; int l2 = l*l;
     VectorXd x0 = VectorXd::Map(X0.data(),ll); 
@@ -691,17 +748,33 @@ fides::cost_fun_ret_t f_aux(DynamicVector<double> X0, DynamicVector<double> X, v
     data->gamma->set_no(NO*exp_unit(&step));
     if (accepted){
         //on a successfull step we have to update the reference points
-        data->x1 = x; data->grad1 = data->func->grad_E(data->gamma); data->E1 = data->func->E(data->gamma);
+        if(data->hess_approx == "dBFGS"){
+            //get x and grad in nu space
+            MatrixXd J = data->func->Jac(data->gamma); MatrixXd Jt = J.transpose();
+            MatrixXd Jinv = data->func->InvJac(data->gamma).transpose(); 
+            data->x1 = J*x; data->grad1 = Jinv*data->func->grad_E(data->gamma); data->E1 = data->func->E(data->gamma);
+        }
+        else{
+            data->x1 = x; data->grad1 = data->func->grad_E(data->gamma); data->E1 = data->func->E(data->gamma);
+        }
         return make_tuple(0,DynamicVector<double>(0),DynamicMatrix<double>(0,0));
     }
+    MatrixXd J = data->func->Jac(data->gamma); MatrixXd Jt = J.transpose(); MatrixXd Jinv;
+
+    if(data->hess_approx == "dBFGS"){
+        Jinv = data->func->InvJac(data->gamma).transpose(); 
+        data->x2 = J*x;
+    }
+    else{data->x2 = x;}
     
-    data->x2 = x;
     
     //Compute E grad hessian
     MatrixXd hess_approx;
     double E = data->func->E(data->gamma) ; data->E2 = E;
     VectorXd grad = data->func->grad_E(data->gamma);
-    data->grad2 = grad;
+    if(data->hess_approx == "dBFGS"){data->grad2 = Jinv*grad;}
+    else{data->grad2 = grad;}
+    
     
     if(data->hess_approx == "exa") { data->hess_ = data->func->hess_E_exa(data->gamma); }
     else if( data->niter%data->interval==0 && data->niter !=0){ 
@@ -717,21 +790,34 @@ fides::cost_fun_ret_t f_aux(DynamicVector<double> X0, DynamicVector<double> X, v
         else if(data->hess_approx == "BFGS"){ BFGS_aux(f_data); }
         else if(data->hess_approx == "tBFGS"){ tBFGS_aux(f_data); }
         else if(data->hess_approx == "sBFGS"){ sBFGS_aux(f_data); }
+        else if(data->hess_approx == "dBFGS"){ dBFGS_aux(f_data); }
         else if(data->hess_approx == "LBFGS"){ LBFGS_aux(f_data); }
-        else if(data->hess_approx == "Zero"){ ZERO(f_data); }
+        else if(data->hess_approx == "Zero"){ ZERO_aux(f_data); }
         else{ throw::invalid_argument("Unknown Hessian approximation. "); }
-        MatrixXd J = data->func->Jac(data->gamma); MatrixXd Jt = J.transpose();
         data->hess_ = data->hess_cheap_;  
+        if(!data->do_NONO){ //only use the occupation block of the expensive part of the Hessian
+            data->hess_exp_.block(0,l,l,l2) = MatrixXd::Zero(l,l2);
+            data->hess_exp_.block(l,0,l2,l) = MatrixXd::Zero(l2,l);
+            data->hess_exp_.block(l,l,l2,l2) = MatrixXd::Zero(l2,l2);
+        }
+        
         if (data->mixed){ 
-            double snNorm  = (x-x0).segment(0,l).lpNorm<Infinity>(); if(data->niter==0){snNorm=1;}
+            double snNorm  = (x-x0).segment(0,l)                                                                                                                                .lpNorm<Infinity>(); if(data->niter==0){snNorm=1;}
             data->hess_ += (1.-Activation_log(snNorm,EPSILON,BETA))*Jt*data->hess_exp_*J;
         }
         else {
             data->hess_ += Jt*data->hess_exp_*J;
         }
     }
-
-    DynamicVector<double> grad_ret (ll); DynamicMatrix<double> hess_ret (ll,ll); 
+    if(!data->do_nNO){
+        data->hess_.block(0,l,l,ll-l) = MatrixXd::Zero(l,ll-l); //remove coupling
+        data->hess_.block(l,0,ll-l,l) = MatrixXd::Zero(ll-l,l);
+    }
+    if(data->r_diag){
+        data->hess_ = data->hess_.diagonal().asDiagonal();
+    }
+    
+    DynamicVector<double> grad_ret (ll); blaze::SymmetricMatrix<DynamicMatrix<double>> hess_ret (ll); 
     for (int i=0;i<ll;i++){
         grad_ret[i] = grad(i);
         for (int j =0;j<=i;j++){
@@ -749,26 +835,32 @@ fides::cost_fun_ret_t f_aux(DynamicVector<double> X0, DynamicVector<double> X, v
         nvct_s_ovlp(i) = neigvects.col(i).dot(x-x0);
          vct_s_ovlp(i) =  eigvects.col(i).dot(x-x0);
 
-    }*/
-    *data->ofile<<"E="<<E<<" iter="<<data->niter<<" |grad|="<<grad.norm()<<" |step|="<<(x-x0).norm()/*<<" |eigvls|="<<H_exa.selfadjointView<Upper>().eigenvalues().norm() \
-    <<" |H_er|="<<H_error.norm()<<" |H_er_nn|="<<H_error.block(0,0,l,l).norm()\
-    <<" |H_er_NONO|="<<H_error.block(l,l,ll-l,ll-l).norm()<<" |H_er_nNO|="<<sqrt(2.)*H_error.block(0,l,l,ll-l).norm()\ 
+    }
+    double snNorm = (x-x0).segment(0,l).lpNorm<Infinity>();
+    MatrixXd Hdiag = MatrixXd::Zero(ll,ll); for (int i=0;i<ll;i++){ Hdiag(i,i) = data->hess_(i,i);}
+    VectorXd s = (x-x0);*/
+    
+    *data->ofile<<"E="<<E<<" iter="<<data->niter<<" |grad|="<<grad.norm()<<" |step|="<<(x-x0).norm()\
+    /*<<" sTg_l2="<<s.transpose()*data->grad1<<" sTg_H="<<s.transpose()*data->hess_*data->grad1<<" sTg_Hd="<<s.transpose()*Hdiag*grad\
+    <<" |s_n|_oo="<<snNorm<<" |s_no|="<<s.segment(l,ll-l).lpNorm<Infinity>()<<" A="<<(1.-Activation_log(snNorm,EPSILON,BETA))\
     <<" #eigvl_tot="<<neigvals.size()<<" #eigvl_n="<<negative_eigvls(hess_exa.block(0,0,l,l)).size()\
     <<" #eigvl_no="<<negative_eigvls(hess_exa.block(l,l,ll-l,ll-l)).size()<<" mean_eigvl="<<eigvals.cwiseAbs().mean()<<" max_neigvl="<<neigvals.lpNorm<Infinity>()\
-    <<" mean_ovlp="<<vct_s_ovlp.cwiseAbs().mean()<<" max_novlp="<<nvct_s_ovlp.lpNorm<Infinity>()*/<<endl;
-    
+    <<" |eigvls|="<<hess_exa.selfadjointView<Upper>().eigenvalues().norm() \
+    <<" |H_er|="<<H_error.norm()<<" |H_er_nn|="<<H_error.block(0,0,l,l).norm()\
+    <<" |H_er_NONO|="<<H_error.block(l,l,ll-l,ll-l).norm()<<" |H_er_nNO|="<<sqrt(2.)*H_error.block(0,l,l,ll-l).norm()\ 
+    <<" mean_ovlp="<<vct_s_ovlp.cwiseAbs().mean()<<" max_novlp="<<nvct_s_ovlp.lpNorm<Infinity>()*/
+    <<endl;
+
     data->gamma->set_no(NO);
     data->niter++;
-    
+
     return make_tuple(E,grad_ret,hess_ret);
     };
 
 
-/* Optimises the occupations and NOs of the 1RDM with respect to the ground state energy
+/* Optimises the NOs of the 1RDM with respect to the inimisation of the energy
 \param args gamma: 1RDM
             func: functional
-            hess_approx: expensive Hessian approximation
-            ofstream: file in wich outputs are saved
             epsilon: required precision
             disp: get detail on the optimisation /TO DO/
             maxiter: maximum number of iterations
@@ -779,6 +871,7 @@ tuple<double,int> opti_nno(RDM1* gamma, Functional* func, string hess_approx, of
                             double epsilon, bool disp, int maxiter){
     int l = gamma->size(); int ll = l*(l+1)/2; int l2 = l*l; 
     DynamicVector<double>  x(ll); DynamicVector<double> lb (ll); DynamicVector<double> ub (ll);
+    
     for (int i = 0; i < l; i++) {
         x[i] = gamma->x(i); lb[i] = -4.; ub[i] = 4.;
     }
@@ -811,15 +904,20 @@ tuple<double,int> opti_nno(RDM1* gamma, Functional* func, string hess_approx, of
             f_data.memory = M; 
         }
     }
-    else if (hess_approx.find("tBFGS") != string::npos){//called xBFGS in the paper
-        //Use tBFGS approximation of the Hessian
+    else if (hess_approx.find("tBFGS") != string::npos){
+        //Use ~BFGS approximation of the Hessian
         f_data.hess_approx = "tBFGS";
     } 
     else if (hess_approx.find("sBFGS") != string::npos){
-        //Use sBFGS approximation of the Hessian
+        //Use ~BFGS approximation of the Hessian
         f_data.hess_approx = "sBFGS";
     } 
-    else if (hess_approx.find("BFGS") != string::npos){//also nuBFGS in the paper
+    else if (hess_approx.find("dBFGS") != string::npos){
+        //Use ~BFGS approximation of the Hessian
+        f_data.hess_approx = "dBFGS";
+
+    }
+    else if (hess_approx.find("BFGS") != string::npos){//also called by bBFGS in nu-space
         //Use BFGS approximation of the Hessian
         f_data.hess_approx = "BFGS";
     } 
@@ -828,7 +926,7 @@ tuple<double,int> opti_nno(RDM1* gamma, Functional* func, string hess_approx, of
         f_data.hess_approx = "DFP";
     }
     else if (hess_approx.find("Broyden") != string::npos){
-        //Use an element of the Broyden class approximation of the Hessian
+        //Use a element of the Broyden class approximation of the Hessian
         f_data.hess_approx = "Broyden";
     }
     else if (hess_approx.find("ZERO") != string::npos || hess_approx.find("Zero") != string::npos){
@@ -838,6 +936,7 @@ tuple<double,int> opti_nno(RDM1* gamma, Functional* func, string hess_approx, of
     else{
         throw::invalid_argument("Unknown Hessian approximation. ");
     }
+
     fides::cost_function_t f_;    
     if(hess_approx.find("_aux") != string::npos){
         //Use an approximation of the auxiliary Hessian
@@ -866,12 +965,34 @@ tuple<double,int> opti_nno(RDM1* gamma, Functional* func, string hess_approx, of
         }
     }
     f_data.gamma = gamma; f_data.func = func; f_data.disp = disp;
-    f_data.x1 = VectorXd::Zero(ll); f_data.grad1 = func->grad_E(gamma); f_data.E1 = func->E(gamma);
+    if (f_data.hess_approx == "dBFGS"){
+        MatrixXd Jinv = func->InvJac(gamma).transpose(); 
+        f_data.x1 = VectorXd::Zero(l+l*l); f_data.grad1 = Jinv*func->grad_E(gamma); 
+    }
+    else{f_data.x1 = VectorXd::Zero(ll); f_data.grad1 = func->grad_E(gamma); }
+    f_data.E1 = func->E(gamma);
     f_data.niter=0; f_data.ofile = ofile;  
     f_data.do_1st_iter = true; f_data.interval = INT_MAX; 
+    f_data.do_nn = true; f_data.do_NONO = true; f_data.do_nNO = true; 
     
     fides::Options options; options.maxiter = maxiter; options.refine_stepback = false; 
-    options.fatol = 1e-17; options.frtol = 1e-17; options.xtol = epsilon; 
+    options.fatol = 1e-17; options.frtol = 1e-17; options.xtol = epsilon; options.gatol = 100*epsilon; 
+    //options.mu = 1e-2; options.eta = 0.4;
+    //options.delta_init = 1.; options.gamma1 = 1.; options.gamma2 = 1.; //test without trust-region
+
+    if ((hess_approx.find("no_coupling") != string::npos) || (hess_approx.find("no_nNO") != string::npos)){
+        //don't use the coupling of the total Hessian
+        f_data.do_nNO = false; 
+    }
+    if (hess_approx.find("no_NONO") != string::npos){
+        //don't use the orbital block of the expensive approximate Hessian
+        f_data.do_NONO = false; 
+    }
+    if (hess_approx.find("diag") != string::npos){
+        //restric to diagonal of the Hessian
+        f_data.r_diag=true;
+    }
+    else { f_data.r_diag=false; }
 
     string::size_type p = hess_approx.find("hybrid");
     if(p != string::npos){
