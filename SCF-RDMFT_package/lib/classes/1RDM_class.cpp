@@ -958,7 +958,7 @@ tuple<double,int> opti_nno(RDM1* gamma, Functional* func, string hess_approx, of
         if(p != string::npos){
             int M;
             string::size_type p2 = hess_approx.find('_',p+6);
-            if (p2 == string::npos){ M = 30; }
+            if (p2 == string::npos){ M = 500; }
             else{
                 string m = hess_approx.substr(p+5,p2-p-1); M = stoi(m);
             }  
